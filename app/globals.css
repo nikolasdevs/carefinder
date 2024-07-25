@@ -31,3 +31,14 @@ body {
     text-wrap: balance;
   }
 }
+
+
+
+.input {
+  padding: 1rem;
+  border-radius: 0.3rem;
+  width: 100%;
+  outline: none;
+  color: rgb(var(--clr-secondary));
+  color: grey;
+}
