@@ -1,5 +1,6 @@
 // components/CreateAdmin.tsx
 import createAdminUser from "@/utils/createAdminUser";
+import { getErrorMessage } from "@/utils/errorHandler";
 import React, { useState } from "react";
 
 const CreateAdmin = () => {
@@ -11,8 +12,10 @@ const CreateAdmin = () => {
     try {
       await createAdminUser(email, password);
       setStatus(`Admin user created successfully with email: ${email}`);
-    } catch (error) {
-      setStatus(`Error creating admin user: ${error.message}`);
+    } catch (e) {
+      const errorMessage = getErrorMessage(e);
+      console.error(errorMessage);
+      alert(errorMessage);
     }
   };
 
