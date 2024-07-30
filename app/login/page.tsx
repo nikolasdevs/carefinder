@@ -21,7 +21,7 @@ const Login = () => {
     event.preventDefault();
     try {
       await Signin(email, password, "");
-      router.push("/register");
+      router.push("/dashboard");
     } catch (e) {
       const errorMessage = getErrorMessage(e);
       console.error("Sign in failed:", errorMessage);
@@ -56,7 +56,7 @@ const Login = () => {
           </form>
           <div className="flex">
             <p>Yet to have an account?</p>
-            <Link href="/login">Register</Link>
+            <Link href="/register">Register</Link>
           </div>
           <div className="md:my-12 my-6 before:mr-4 before:w-32 before:h-[1px] before:bg-gray-100 after:w-32 after:h-[1px] after:bg-gray-100 flex items-center justify-center after:ml-4">
             OR
