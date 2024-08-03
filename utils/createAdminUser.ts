@@ -1,9 +1,7 @@
 "use client";
-
-import { setDoc, doc } from "firebase/firestore";
-
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, firestore } from "@/app/firebase/config";
+import { setDoc, doc } from "firebase/firestore";
 
 const createAdminUser = async (email: string, password: string) => {
   try {

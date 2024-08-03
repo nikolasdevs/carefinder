@@ -21,7 +21,7 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center text-neutral-800">
+    <div className="h-screen flex flex-col items-center justify-center text-neutral-800 bg-primary-medium">
       <h1 className="text-2xl font-semibold mb-4">Admin Login</h1>
       <form onSubmit={handleLogin} className="flex flex-col gap-4">
         <input
@@ -29,7 +29,7 @@ const AdminLogin = () => {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 rounded"
+          className="input"
           required
         />
         <input
@@ -37,10 +37,10 @@ const AdminLogin = () => {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 rounded"
+          className="input"
           required
         />
-        <button type="submit" className="bg-primary text-white p-2 rounded">
+        <button type="submit" className="auth-btn">
           Login
         </button>
       </form>

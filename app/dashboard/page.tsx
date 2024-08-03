@@ -15,6 +15,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { fetchStates } from "../lib/fetchStates";
 import { fetchLga } from "../lib/fetchLga";
 import Papa from "papaparse";
+import Navbar from "../Navbar";
 
 const DashboardPage = () => {
   const [states, setStates] = useState<string[]>([]);
@@ -63,15 +64,6 @@ const DashboardPage = () => {
     loadLgas();
   }, [state]);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push("/login");
-    } catch (error) {
-      console.error("Logout Error:", error);
-    }
-  };
-
   const handleChangePassword = () => {
     router.push("/changePassword");
   };
@@ -116,73 +108,80 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 text-neutral-800">
-      <h1 className="text-2xl mb-4">Search Hospitals</h1>
-      <div className="mb-4">
-        <select
-          className="border p-2 rounded"
-          value={state}
-          onChange={(e) => setState(e.target.value)}
-        >
-          <option value="">Select State</option>
-          {states.map((state) => (
-            <option key={state} value={state}>
-              {state}
-            </option>
-          ))}
-        </select>
-        <select
-          className="border p-2 rounded ml-2"
-          value={lga}
-          onChange={(e) => setLga(e.target.value)}
-          disabled={!state}
-        >
-          <option value="">Select Local Government</option>
-          {lgas.map((lga) => (
-            <option key={lga} value={lga}>
-              {lga}
-            </option>
-          ))}
-        </select>
-        <button
-          className="bg-blue-500 text-white p-2 rounded ml-4"
-          onClick={handleSearch}
-          disabled={!state || !lga}
-        >
-          Search
-        </button>
+    <div className="h-screen mx-auto p-4 text-neutral-800">
+      <div>
+        <Navbar />
       </div>
-      {loading && <p>Loading hospitals...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-      {hospitals.length > 0 && (
-        <div>
-          <h2 className="text-xl mb-2">Hospital Results</h2>
-          <ul>
-            {hospitals.map((hospital, index) => (
-              <li key={index} className="border p-2 mb-2">
-                <h3 className="text-lg font-bold">{hospital.name}</h3>
-                <p>{hospital.address}</p>
-                <p>{hospital.phone}</p>
-                <p>
-                  {hospital.state}, {hospital.lga}
-                </p>
-              </li>
-            ))}
-          </ul>
+      <main className=" flex flex-col items-center justify-center">
+        <h1 className="text-2xl my-10 font-semibold">
+          Search Hospitals within your locality
+        </h1>
+        <div className="mb-4 flex flex-col md:flex-row gap-5 justify-center items-center w-full md:w-auto">
+          <div className="input">
+            <select
+              className="w-full outline-none"
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+            >
+              <option value="">Select State</option>
+              {states.map((state) => (
+                <option key={state} value={state}>
+                  {state}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="input">
+            <select
+              className="w-full outline-none"
+              value={lga}
+              onChange={(e) => setLga(e.target.value)}
+              disabled={!state}
+            >
+              <option value="">Select Local Government</option>
+              {lgas.map((lga) => (
+                <option key={lga} value={lga}>
+                  {lga}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
-            className="bg-green-500 text-white p-2 rounded mt-4"
-            onClick={exportToCSV}
+            className="bg-primary-dark text-white rounded-md py-3 px-4 w-full"
+            onClick={handleSearch}
+            disabled={!state || !lga}
           >
-            Export to CSV
+            Search
           </button>
         </div>
-      )}
-      <button
-        className="bg-red-500 text-white p-2 rounded mt-4"
-        onClick={handleLogout}
-      >
-        Logout
-      </button>
+        {loading && <p>Loading hospitals...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+        {hospitals.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-xl mb-4 font-semibold">Hospital Results</h2>
+            <ul>
+              {hospitals.map((hospital, index) => (
+                <li key={index} className="border-t p-2 mb-2">
+                  <h3 className="text-lg font-semibold text-primary-dark">
+                    {hospital.name}
+                  </h3>
+                  <p className="my-2 text-neutral-500">{hospital.address}</p>
+                  <p className=" text-neutral-400 text-sm">{hospital.phone}</p>
+                  {/* <p>
+                    {hospital.state}, {hospital.lga}
+                  </p> */}
+                </li>
+              ))}
+            </ul>
+            <button
+              className="bg-success text-white py-3 px-4 rounded mt-4"
+              onClick={exportToCSV}
+            >
+              Export to CSV
+            </button>
+          </div>
+        )}
+      </main>
     </div>
   );
 };

@@ -17,28 +17,45 @@
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
+  @apply text-neutral-500;
+  /* color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,
       transparent,
       rgb(var(--background-end-rgb))
     )
-    rgb(var(--background-start-rgb));
+    rgb(var(--background-start-rgb)); */
 }
-
+/* 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+} */
+
+.auth-container {
+  @apply bg-neutral-400 h-screen w-full flex flex-col items-center justify-center gap-4;
 }
 
+.auth-btn {
+  @apply bg-primary-dark text-neutral-100 py-3 px-4 rounded-md hover:shadow-lg;
+}
+.auth-btn_outline {
+  @apply text-primary-dark border border-primary-dark py-3 px-4 rounded-md hover:shadow-lg;
+}
 
+.gAuthBtn {
+  @apply bg-neutral-100 text-neutral-400 py-3 px-4 rounded-md hover:shadow-lg w-full flex gap-3 items-center justify-center;
+}
 
 .input {
-  padding: 1rem;
-  border-radius: 0.3rem;
-  width: 100%;
-  outline: none;
-  color: rgb(var(--clr-secondary));
-  color: grey;
+  @apply p-1 rounded-md w-full outline-none text-neutral-400 border border-neutral-300 py-3 px-4;
+}
+
+.hospital-headers {
+  @apply w-full  py-4 tracking-wide font-semibold;
+}
+
+.hospital-list {
+  @apply w-full   py-3;
 }

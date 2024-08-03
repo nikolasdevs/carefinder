@@ -49,7 +49,7 @@ const fetchHospitals = async (
   const hospitals = hospitalDocs.docs.map(
     (doc) => ({ id: doc.id, ...doc.data() } as Hospital)
   );
-  console.log(hospitals)
+  console.log(hospitals);
   return hospitals;
 };
 
