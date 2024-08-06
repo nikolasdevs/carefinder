@@ -1,5 +1,5 @@
 "use client";
-
+import { Button } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth, firestore } from "../firebase/config";
@@ -26,8 +26,26 @@ import {
   Type,
 } from "../lib/fetchHospital";
 import { useDebouncedCallback } from "use-debounce";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const DashboardPage = () => {
+export const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
@@ -42,6 +60,12 @@ const DashboardPage = () => {
   const [addressQuery, setAddressQuery] = useState<string>("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const lastItemIndex = currentPage * itemsPerPage;
+  const firstItemIndex = lastItemIndex - itemsPerPage;
+  const currentItems = filteredHospitals.slice(firstItemIndex, lastItemIndex);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -143,45 +167,29 @@ const DashboardPage = () => {
             Search Hospitals within your locality
           </h1>
           <div className="mb-4 flex flex-col md:flex-row gap-5 justify-center items-center w-full md:w-1/2">
-            <div className="input bg-neutral-100">
-              <select
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                className="outline-none w-full"
-              >
-                <option value="">All States</option>
+            <Select value={state} onValueChange={(value) => setState(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select State" />
+              </SelectTrigger>
+              <SelectContent>
                 {states.map((state) => (
-                  <option key={state.id} value={state.id}>
+                  <SelectItem key={state.id} value={state.name}>
                     {state.name}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-            </div>
+              </SelectContent>
+            </Select>
 
-            <input
+            <Input
               type="text"
               placeholder="Search by address"
               value={addressQuery}
               onChange={(e) => setAddressQuery(e.target.value)}
-              className="border px-4 py-2 w-full input"
             />
-            <div className=" px-4 py-3 bg-primary-dark rounded-lg ">
-              <button
-                className="text-sm outline-none text-white w-full"
-                onClick={handleFilter}
-              >
-                {/* <MagnifyingGlass /> */}
-                Search
-              </button>
-            </div>
-            <div className=" px-4 py-3 border border-primary-dark rounded-lg ">
-              <button
-                className=" text-sm rounded-lg outline-none text-primary-dark "
-                onClick={handleResetFilters}
-              >
-                Reset
-              </button>
-            </div>
+
+            <Button onClick={handleFilter}>Search</Button>
+
+            <Button onClick={handleResetFilters}>Reset</Button>
           </div>
         </div>
 
@@ -189,38 +197,46 @@ const DashboardPage = () => {
         {error && <p className="text-red-500">{error}</p>}
         {hospitals.length > 0 && (
           <div className="mt-10  w-full md:p-10 p-4 ">
-            <h2 className="text-xl mb-4 font-semibold">Hospital Results</h2>
+            <h2 className="text-xl mb-8 font-semibold w-full text-center">
+              Hospital Results
+            </h2>
             <ul className=" flex gap-4 items-center flex-wrap w-full justify-center">
-              {filteredHospitals.map((hospital, index) => (
-                <li
-                  key={index}
-                  className="border-t p-4 rounded-lg border sm:w-1/5 h-56 w-full  flex gap-3 pt-6 flex-col"
-                >
-                  <h3 className="text-lg font-semibold text-primary-dark">
-                    {hospital.name}
-                  </h3>
-                  <p className="text-sm text-neutral-500 flex items-center gap-2">
+              {currentItems.map((hospital, index) => (
+                <Card className="w-[350px] h-[250px]">
+                  <CardHeader>
+                    <CardTitle className="text-lg font-semibold text-primary-dark">
+                      {" "}
+                      {hospital.name}
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent>
                     {" "}
-                    <span>
-                      <MapPinIcon width={16} />
-                    </span>{" "}
-                    {hospital.address}
-                  </p>
-                  <p className=" text-neutral-400 text-sm flex items-center gap-2 mt-2">
-                    <span>
-                      <PhoneIcon width={16} />
-                    </span>{" "}
-                    {hospital.phone_number}
-                  </p>
-                </li>
+                    <p className="text-sm text-neutral-500 flex items-center gap-2">
+                      {" "}
+                      <span>
+                        <MapPinIcon width={16} />
+                      </span>{" "}
+                      {hospital.address}
+                    </p>
+                    <p className=" text-neutral-400 text-sm flex items-center gap-2 mt-2">
+                      <span>
+                        <PhoneIcon width={16} />
+                      </span>{" "}
+                      {hospital.phone_number}
+                    </p>
+                  </CardContent>
+                </Card>
               ))}
             </ul>
-            <button
-              className="bg-success text-white py-3 px-4 rounded mt-4"
-              onClick={exportToCSV}
-            >
-              Export to CSV
-            </button>
+            <Button className="my-8" onClick={exportToCSV}>Export to CSV</Button>
+            
+            <PaginationSection
+              totalItems={filteredHospitals.length}
+              itemsPerPage={itemsPerPage}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+            />
           </div>
         )}
       </main>
@@ -241,14 +257,12 @@ const DashboardPage = () => {
             action=""
             className="flex items-center justify-between w-full text-neutral-400 rounded-lg bg-neutral-100"
           >
-            <input
+            <Input
               type="email"
               placeholder="Enter your email"
-              className="outline-none px-4 "
+              className="outline-none px-4 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 rounded-e-none"
             />
-            <button className="bg-primary-dark text-neutral-100 hover:text-primary-light py-4 px-4 rounded-e-lg">
-              Subscribe
-            </button>
+            <Button className=" rounded-e-lg rounded-s-none">Subscribe</Button>
           </form>
         </div>
       </div>
@@ -276,3 +290,69 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
+
+function PaginationSection({
+  totalItems,
+  itemsPerPage,
+  currentPage,
+  setCurrentPage,
+}: {
+  totalItems: any;
+  itemsPerPage: any;
+  currentPage: any;
+  setCurrentPage: any;
+}) {
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const maxPagesToShow = 6;
+  let pages = [];
+
+  const startPage = Math.max(currentPage - Math.floor(maxPagesToShow / 2), 1);
+  const endPage = Math.min(startPage + maxPagesToShow - 1, totalPages);
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  return (
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            isActive={currentPage === 1}
+            onClick={handlePrevPage}
+          />
+        </PaginationItem>
+
+        {pages.map((page) => (
+          <PaginationItem key={page}>
+            <PaginationLink
+              isActive={currentPage === page}
+              onClick={() => setCurrentPage(page)}
+            >
+              {page}
+            </PaginationLink>
+          </PaginationItem>
+        ))}
+
+        <PaginationItem>
+          <PaginationNext
+            isActive={currentPage === totalPages}
+            onClick={handleNextPage}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  );
+}
