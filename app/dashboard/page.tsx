@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import MarkdownEditor from "@/components/MarkdownEditor";
 
 export const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
@@ -229,8 +230,10 @@ export const DashboardPage = () => {
                 </Card>
               ))}
             </ul>
-            <Button className="my-8" onClick={exportToCSV}>Export to CSV</Button>
-            
+            <Button className="my-8" onClick={exportToCSV}>
+              Export to CSV
+            </Button>
+
             <PaginationSection
               totalItems={filteredHospitals.length}
               itemsPerPage={itemsPerPage}
@@ -239,6 +242,11 @@ export const DashboardPage = () => {
             />
           </div>
         )}
+
+        <div>
+          <h1>Editor</h1>
+          <MarkdownEditor />
+        </div>
       </main>
       <div className="w-full flex md:flex-row flex-col md:h-[500px] mt-10">
         <Image src={location} alt="location" className="md:w-1/2 w-full" />
