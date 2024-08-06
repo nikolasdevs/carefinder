@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc } from "@firebase/firestore";
 import Image from "next/image";
 import logo from "../public/heroImg.png";
+import Link from "next/link";
 
 const navigation = [
   { name: "Dashboard", href: "#", current: true },
@@ -74,9 +75,9 @@ export default function Example() {
             </DisclosureButton>
           </div>
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
-            <div className="flex flex-shrink-0 items-center">
-              <Image alt="Your Company" src={logo} className="h-8 w-auto" />
-            </div>
+            <Link href='/dashboard' className="flex flex-shrink-0 items-center">
+              <Image alt="Company Logo" src={logo} className="h-8 w-auto" />
+            </Link>
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
                 {navigation.map((item) => (

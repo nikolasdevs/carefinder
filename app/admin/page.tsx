@@ -1,90 +1,160 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { onAuthStateChanged, User } from "firebase/auth";
-import { auth, firestore } from "../firebase/config";
-import { useRouter } from "next/navigation";
+
+import { useState, useEffect } from "react";
 import {
-  addDoc,
   collection,
+  addDoc,
   deleteDoc,
   doc,
-  DocumentData,
-  getDoc,
+  updateDoc,
   getDocs,
-  query,
-  where,
-  writeBatch,
 } from "firebase/firestore";
+import { firestore } from "../firebase/config";
 import AdminNavbar from "../AdminNavbar";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
-import HospitalForm from "@/utils/hospitalDoc";
-import Papa from "papaparse";
+import { DotsThreeOutlineVertical } from "@phosphor-icons/react";
+import {
+  fetchHospitalData,
+  filterHospitalsByState,
+  Hospital,
+  Type,
+} from "../lib/fetchHospital";
+import { fetchStates } from "../lib/fetchStates";
+import MarkdownEditor from "../EditHospital";
 
+function isHospital(data: any): data is Hospital {
+  return (
+    typeof data === "object" &&
+    typeof data.id === "string" &&
+    typeof data.name === "string" &&
+    typeof data.address === "string" &&
+    typeof data.phone_number === "string" &&
+    typeof data.location === "string" &&
+    typeof data.state === "object" &&
+    typeof data.type === "object"
+  );
+}
 const AdminPage = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [hospitals, setHospitals] = useState<DocumentData[]>([]);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [filteredHospitals, setFilteredHospitals] = useState<Hospital[]>([]);
+  const [state, setState] = useState<string>("");
+  const [states, setStates] = useState<{ id: string; name: string }[]>([]);
+  const [types, setTypes] = useState<Type[]>([]);
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(
     null
   );
   const [showForm, setShowForm] = useState(false);
-
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchHospitals = async () => {
-      const hospitalDocs = await getDocs(collection(firestore, "hospitals"));
-      const hospitalList = hospitalDocs.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setHospitals(hospitalList);
+    const fetchData = async () => {
+      const data = await fetchHospitalData(state);
+      if (data) {
+        setHospitals(data);
+        setFilteredHospitals(data);
+      }
+      setLoading(false);
     };
+    fetchData();
+  }, [state]);
 
-    fetchHospitals();
-  }, [showForm]);
+  useEffect(() => {
+    const loadStates = async () => {
+      setLoading(true);
+      const fetchedStates = await fetchStates();
+      const statesData = fetchedStates.map((state) => ({
+        id: state,
+        name: state,
+      }));
+      setStates(statesData);
+      setLoading(false);
+    };
+    loadStates();
+  }, []);
 
-  const fetchHospitalData = async () => {
-    const hospitalDocs = await getDocs(collection(firestore, "hospitals"));
-    const hospitalList = hospitalDocs.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    setHospitals(hospitalList);
+  useEffect(() => {
+    const loadTypes = async () => {
+      setLoading(true);
+      try {
+        const typesCollection = collection(firestore, "types");
+        const typesSnapshot = await getDocs(typesCollection);
+        const typesList = typesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Type[];
+        setTypes(typesList);
+      } catch (error) {
+        console.error("Error fetching types:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTypes();
+  }, []);
+
+  const handleFilterByState = () => {
+    const filtered = filterHospitalsByState(hospitals, state);
+    setFilteredHospitals(filtered);
   };
 
-  useEffect(() => {
-    fetchHospitalData();
-  }, []);
+  const handleResetFilters = () => {
+    setState("");
+    setFilteredHospitals(hospitals);
+  };
 
   const handleAddNew = () => {
     setSelectedHospitalId(null);
     setShowForm(true);
   };
 
-  const handleEdit = (id: React.SetStateAction<string | null>) => {
+  const handleAddHospital = async (newHospital: Hospital) => {
+    try {
+      const hospitalRef = collection(firestore, "hospitals");
+      const newHospitalRef = await addDoc(hospitalRef, newHospital);
+      setHospitals([...hospitals, { ...newHospital, id: newHospitalRef.id }]);
+      setFilteredHospitals([
+        ...filteredHospitals,
+        { ...newHospital, id: newHospitalRef.id },
+      ]);
+      setShowForm(false);
+    } catch (error) {
+      console.error("Error adding hospital:", error);
+    }
+  };
+
+  const handleUpdateHospital = async (updatedHospital: Hospital) => {
+    if (!isHospital(updatedHospital)) {
+      throw new Error("Invalid hospital data");
+    }
+
+    try {
+      const hospitalRef = doc(firestore, "hospitals", updatedHospital.id);
+      const updatedHospitalData = {
+        ...updatedHospital,
+      };
+      await updateDoc(hospitalRef, updatedHospitalData);
+      const updatedList = hospitals.map((hospital) =>
+        hospital.id === updatedHospital.id ? updatedHospital : hospital
+      );
+      setHospitals(updatedList);
+      setFilteredHospitals(updatedList);
+      setShowForm(false);
+      setSelectedHospitalId(null);
+    } catch (error) {
+      console.error("Error updating hospital:", error);
+    }
+  };
+
+  const handleEdit = (id: string | null) => {
     setSelectedHospitalId(id);
     setShowForm(true);
   };
 
-  const handleSave = () => {
-    setShowForm(false);
-    setSelectedHospitalId(null);
-  };
-
-  const handleDelete = async (id: string | null) => {
-    try {
-      if (id) {
-        const hospitalRef = doc(firestore, "hospitals", id);
-        await deleteDoc(hospitalRef);
-        setHospitals(hospitals.filter((hospital) => hospital.id !== id));
-      }
-      setShowForm(false);
-      setSelectedHospitalId(null);
-    } catch (error) {
-      console.error("Error deleting hospital:", error);
-      alert("Error deleting hospital.");
+  const handleSave = (hospital: Hospital) => {
+    if (hospital.id) {
+      handleUpdateHospital(hospital);
+    } else {
+      handleAddHospital(hospital);
     }
   };
 
@@ -93,171 +163,155 @@ const AdminPage = () => {
     setSelectedHospitalId(null);
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setUser(user);
-        const userDoc = await getDoc(doc(firestore, "users", user.uid));
-        if (userDoc.exists() && userDoc.data()?.role === "admin") {
-          setIsAdmin(true);
-        } else {
-          router.push("/admin/adminLogin");
-        }
-      } else {
-        router.push("/admin/adminLogin");
+  const handleDelete = async (id: string | null | undefined) => {
+    if (id) {
+      try {
+        await deleteDoc(doc(firestore, "hospitals", id));
+        setHospitals(hospitals.filter((hospital) => hospital.id !== id));
+        setFilteredHospitals(
+          filteredHospitals.filter((hospital) => hospital.id !== id)
+        );
+        setShowForm(false);
+        setSelectedHospitalId(null);
+      } catch (error) {
+        console.error("Error deleting hospital:", error);
       }
-    });
-
-    return () => unsubscribe();
-  }, [router]);
-
-  if (!isAdmin) {
-    return <p>Loading...</p>;
-  }
-
-  const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      Papa.parse(file, {
-        header: true,
-        complete: async (results) => {
-          const seenAddresses = new Set();
-          const hospitalsByState = results.data
-            .map((row: any) => ({
-              name: row.name || "Unknown", // Provide a default value or handle missing fields
-              address: row.address || "Unknown",
-              phone: row.phone || "Unknown",
-              lga: row.lga || "Unknown",
-              state: row.state || "Unknown",
-            }))
-            .reduce((acc: any, hospital: any) => {
-              if (!acc[hospital.state]) {
-                acc[hospital.state] = [];
-              }
-              acc[hospital.state].push(hospital);
-              return acc;
-            }, {});
-
-          const batch = writeBatch(firestore);
-          const hospitalsRef = collection(firestore, "hospitals");
-
-          for (const state in hospitalsByState) {
-            const hospitals = hospitalsByState[state];
-            for (const hospital of hospitals) {
-              const querySnapshot = await getDocs(
-                query(hospitalsRef, where("address", "==", hospital.address))
-              );
-
-              if (querySnapshot.empty) {
-                batch.set(doc(hospitalsRef), hospital);
-              } else {
-                console.log(`Duplicate address found: ${hospital.address}`);
-              }
-            }
-          }
-
-          await batch.commit();
-          alert("CSV data uploaded successfully!");
-        },
-        error: (error) => {
-          console.error("Error parsing CSV:", error);
-          alert("Error parsing CSV file.");
-        },
-      });
     }
   };
+
+  const selectedHospital =
+    hospitals.find((hospital) => hospital.id === selectedHospitalId) ||
+    undefined;
   return (
-    <>
+    <div className="w-full h-full px-8 py-4 overflow-hidden">
       <AdminNavbar />
-      <main className="mt-10 px-10">
-        <div className="text-neutral-800">
-          {showForm ? (
-            <HospitalForm
-              hospitalId={selectedHospitalId}
-              onSave={handleSave}
-              onDelete={() => handleDelete(selectedHospitalId)}
-              onCancel={handleCancel}
-            />
+      <div className="w-full h-[calc(100%-3rem)] flex flex-col gap-4">
+        <div className="w-full h-10 flex items-center gap-2">
+          {loading ? (
+            <p>Loading...</p>
           ) : (
             <>
+              <select
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                className="px-4 py-1.5 text-sm rounded-lg outline-none bg-white border border-solid border-gray-300"
+              >
+                <option value="">All States</option>
+                {states.map((state) => (
+                  <option key={state.id} value={state.id}>
+                    {state.name}
+                  </option>
+                ))}
+              </select>
               <button
+                className="px-4 py-1.5 text-sm rounded-lg outline-none text-white bg-blue-500"
+                onClick={handleFilterByState}
+              >
+                Filter
+              </button>
+              <button
+                className="px-4 py-1.5 text-sm rounded-lg outline-none text-white bg-blue-500"
+                onClick={handleResetFilters}
+              >
+                Reset Filters
+              </button>
+              <button
+                className="px-4 py-1.5 text-sm rounded-lg outline-none text-white bg-green-500"
                 onClick={handleAddNew}
-                className="bg-primary-dark text-white p-2 rounded"
               >
                 Add New Hospital
               </button>
-              <input
-                type="file"
-                accept=".csv"
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  handleFileUpload(event)
-                }
-                className="ml-4"
-              />
-
-              <div className="flex font-medium gap-2 items-center justify-between border-b-2 border-b-neutral-300 px-4 mt-5 text-sm">
-                <h2 className="hospital-headers">Name</h2>
-                <h2 className="hospital-headers">Address</h2>
-                <h2 className="hospital-headers">Phone</h2>
-                <h2 className="hospital-headers">LGA</h2>
-                <h2 className="hospital-headers">State</h2>
-                <Menu>
-                  <MenuButton className="">
-                    <EllipsisVerticalIcon className="size-6 invisible" />
-                  </MenuButton>
-                </Menu>
-              </div>
-              <ul className="">
-                {hospitals.map((hospital) => (
-                  <li
-                    key={hospital.id}
-                    className="flex gap-2 items-center justify-between border-b border-b-neutral-300 px-4 "
-                  >
-                    <p className=" hospital-list ">{hospital.name}</p>
-                    <p className=" hospital-list ">{hospital.address}</p>
-                    <p className=" hospital-list ">{hospital.phone}</p>
-                    <p className=" hospital-list ">{hospital.lga}</p>
-                    <p className=" hospital-list ">{hospital.state}</p>
-
-                    <Menu as="div" className="relative flex">
-                      <MenuButton className="">
-                        <EllipsisVerticalIcon className="size-6 text-neutral-500" />
-                      </MenuButton>
-
-                      <MenuItems
-                        transition
-                        className="absolute right-0 z-10 mt-8 w-48 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-black ring-opacity-5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in flex flex-col justify-between gap-4 p-2"
-                      >
-                        <div>
-                          <MenuItem>
-                            <p
-                              onClick={() => handleEdit(hospital.id)}
-                              className=" text-neutral-500 px-4 py-2 text-sm data-[focus]:bg-gray-100 cursor-pointer"
-                            >
-                              Edit
-                            </p>
-                          </MenuItem>
-                          <MenuItem>
-                            <p
-                              onClick={() => handleDelete(hospital.id)}
-                              className="text-neutral-500 px-4 py-2 text-sm  data-[focus]:bg-gray-100 cursor-pointer"
-                            >
-                              Delete
-                            </p>
-                          </MenuItem>
-                        </div>
-                      </MenuItems>
-                    </Menu>
-                  </li>
-                ))}
-              </ul>
             </>
           )}
         </div>
-      </main>
-    </>
+
+        {showForm && (
+          <MarkdownEditor
+            hospitalData={selectedHospital}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            onDelete={() => handleDelete(selectedHospitalId)}
+          />
+        )}
+
+        <div className="w-full h-full overflow-y-auto rounded-lg border border-solid border-gray-300">
+          <table className="w-full h-full text-sm">
+            <thead className="sticky top-0 bg-gray-100">
+              <tr className="h-10 text-left">
+                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                  Name
+                </th>
+                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                  Address
+                </th>
+                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                  Phone Number
+                </th>
+                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                  Location
+                </th>
+                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                  State
+                </th>
+                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                  Type
+                </th>
+                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredHospitals.map((hospital) => (
+                <tr key={hospital.id} className="h-10">
+                  <td className="px-4 border-b border-solid border-gray-300">
+                    {hospital.name}
+                  </td>
+                  <td className="px-4 border-b border-solid border-gray-300">
+                    {hospital.address}
+                  </td>
+                  <td className="px-4 border-b border-solid border-gray-300">
+                    {hospital.phone_number}
+                  </td>
+                  <td className="px-4 border-b border-solid border-gray-300">
+                    {hospital.location}
+                  </td>
+                  <td className="px-4 border-b border-solid border-gray-300">
+                    {hospital.state?.name || "N/A"}
+                  </td>
+                  <td className="px-4 border-b border-solid border-gray-300">
+                    {hospital.type?.name || "N/A"}
+                  </td>
+                  <td className="px-4 border-b border-solid border-gray-300">
+                    <Menu>
+                      <MenuButton className="outline-none">
+                        <DotsThreeOutlineVertical className="w-6 h-6" />
+                      </MenuButton>
+                      <MenuItems className="flex flex-col items-start gap-2 w-36 py-2 bg-white shadow-lg rounded-md border border-solid border-gray-300">
+                        <MenuItem
+                          as="button"
+                          className="w-full px-3 text-left text-xs hover:bg-gray-100"
+                          onClick={() => handleEdit(hospital.id)}
+                        >
+                          Edit
+                        </MenuItem>
+                        <MenuItem
+                          as="button"
+                          className="w-full px-3 text-left text-xs hover:bg-gray-100"
+                          onClick={() => handleDelete(hospital.id)}
+                        >
+                          Delete
+                        </MenuItem>
+                      </MenuItems>
+                    </Menu>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 };
 

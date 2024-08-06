@@ -49,7 +49,7 @@ export default function Example() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.push("/login");
+      router.push("/admin/adminLogin");
     } catch (error) {
       console.error("Logout Error:", error);
     }

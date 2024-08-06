@@ -1,10 +1,12 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import googleLogo from "../../public/google.svg";
 import { useAuth } from "@/store";
 import { useRouter } from "next/navigation";
+import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, User } from "firebase/auth";
+import { auth } from "../firebase/config";
 
 const Register = () => {
   const { Signup, error, message } = useAuth((state) => ({
@@ -12,6 +14,7 @@ const Register = () => {
     error: state.error,
     message: state.message,
   }));
+  const [user, setUser] = useState<null | User>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,6 +37,32 @@ const Register = () => {
       useAuth.setState({ error: errorMessage });
     }
   };
+
+   useEffect(() => {
+     const unsubscribe = onAuthStateChanged(auth, (user) => {
+       if (user) {
+         setUser(user);
+         router.push("/dashboard"); // Adjust the route as necessary
+       } else {
+         setUser(null);
+       }
+     });
+
+     return () => unsubscribe();
+   }, [router]);
+
+   const handleGoogle = async (e: { preventDefault: () => void }) => {
+     e.preventDefault();
+     const provider = new GoogleAuthProvider();
+     try {
+       await signInWithPopup(auth, provider);
+       alert("Sign in successful!");
+       router.push("/dashboard");
+     } catch (error) {
+       console.error("Error signing in with Google:", error);
+       alert("Error signing in with Google.");
+     }
+   };
 
   return (
     <div className=" w-full flex items-center justify-center h-screen">
@@ -79,12 +108,12 @@ const Register = () => {
           OR
         </div>
 
-        <Link className="gAuthBtn" href={"/register/googlesignup"}>
+        <div className="gAuthBtn" onClick={handleGoogle}>
           <span>
             <Image src={googleLogo} width={24} height={24} alt="google logo" />
           </span>
           Sign up with Google
-        </Link>
+        </div>
       </div>
     </div>
   );

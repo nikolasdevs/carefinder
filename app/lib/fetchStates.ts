@@ -11,3 +11,4 @@ export const fetchStates = async (): Promise<string[]> => {
     return [];
   }
 };
+
