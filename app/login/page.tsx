@@ -23,7 +23,6 @@ import authImg from "../../public/heroImg.png";
 import {
   FormField,
   FormItem,
-  FormLabel,
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
