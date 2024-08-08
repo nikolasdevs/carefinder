@@ -2,8 +2,8 @@
 import { Button } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { auth, firestore } from "../firebase/config";
-import { doc, getDoc } from "firebase/firestore";
+import { auth, firestore, storage } from "../firebase/config";
+import { collection, doc, getDoc, setDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { MapPinIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import { fetchStates } from "../lib/fetchStates";
@@ -16,6 +16,7 @@ import {
   FacebookLogo,
   InstagramLogo,
   MagnifyingGlass,
+  NotePencil,
   XLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import {
@@ -43,8 +44,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import MarkdownEditor from "@/components/MarkdownEditor";
+import MarkdownIt from "markdown-it";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import MdEditor from "react-markdown-editor-lite";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import ReactMarkdown from "react-markdown";
+import { NotebookPenIcon } from "lucide-react";
 
 export const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
@@ -59,14 +79,29 @@ export const DashboardPage = () => {
     null
   );
   const [addressQuery, setAddressQuery] = useState<string>("");
+  const [isImageUpload, setIsImageUpload] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [markdown, setMarkdown] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(
+    null
+  );
+  const [file, setFile] = useState<File | null>(null);
+  const [shareableLink, setShareableLink] = useState("");
+  const [isPreview, setIsPreview] = useState(false);
 
   const lastItemIndex = currentPage * itemsPerPage;
   const firstItemIndex = lastItemIndex - itemsPerPage;
   const currentItems = filteredHospitals.slice(firstItemIndex, lastItemIndex);
+
+  const mdParser = new MarkdownIt();
+
+  const handleEditorChange = ({ text }: { text: string }) => {
+    setMarkdown(text);
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -130,11 +165,6 @@ export const DashboardPage = () => {
     setFilteredHospitals(hospitals);
   };
 
-  const handleAddNew = () => {
-    setSelectedHospitalId(null);
-    setShowForm(true);
-  };
-
   const handleChangePassword = () => {
     router.push("/changePassword");
   };
@@ -155,6 +185,142 @@ export const DashboardPage = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleEditClick = (hospital: Hospital | null) => {
+    if (hospital) {
+      const hospitalMarkdown = `
+    ## ${hospital.name}
+    **Address:** ${hospital.address}
+    **Phone Number:** ${hospital.phone_number}
+      `;
+      setMarkdown(hospitalMarkdown);
+      setSelectedHospital(hospital);
+      setModalVisible(true);
+      setIsImageUpload(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0] as File | null;
+    setFile(selectedFile);
+  };
+
+  const handleImageUpload = async () => {
+    if (file) {
+      try {
+        // Resize the image
+        const resizedImage = await resizeImage(file);
+        const storageRef = ref(storage, file.name);
+        const metadata = {
+          contentType: file.type,
+        };
+
+        const uploadResult = await uploadBytes(
+          storageRef,
+          resizedImage,
+          metadata
+        );
+        const imageUrl = await getDownloadURL(uploadResult.ref);
+        const imageMarkdown = `![Image](${imageUrl})`;
+        setMarkdown(markdown + "\n" + imageMarkdown);
+        setFile(null);
+        setIsImageUpload(false);
+        //setModalVisible(false);
+      } catch (error) {
+        console.error("Error uploading file to Firebase Storage:", error);
+      }
+    }
+  };
+
+  const resizeImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+
+      reader.onload = (event) => {
+        const img = document.createElement("img");
+        img.width = 800;
+        img.height = 600;
+        img.src = event.target?.result as string;
+
+        img.onload = () => {
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 600;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const resizedFile = new File([blob], file.name, {
+                type: file.type,
+                lastModified: Date.now(),
+              });
+              resolve(resizedFile);
+            } else {
+              reject(new Error("Canvas is empty"));
+            }
+          }, file.type);
+        };
+
+        img.onerror = (error: any) => reject(error);
+      };
+
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const generateShareableLink = async (markdownContent: string) => {
+    try {
+      // Generate a unique document ID (e.g., using a timestamp or a UUID library)
+      const docId = new Date().getTime().toString(); // Simple unique ID (consider using a UUID library for production)
+      const docRef = doc(collection(firestore, "markdown_contents"), docId);
+      await setDoc(docRef, { content: markdownContent });
+
+      const shareableLink = `${window.location.origin}/view/${docId}`;
+
+      return shareableLink;
+    } catch (error) {
+      console.error("Error generating shareable link:", error);
+      throw new Error("Failed to generate shareable link");
+    }
+  };
+
+  const handlePreview = async () => {
+    setIsPreview(true);
+    try {
+      const link = await generateShareableLink(markdown);
+      setShareableLink(link);
+    } catch (error) {
+      console.error("Error generating shareable link:", error);
+    }
+  };
+
+  const handleBackToEdit = () => {
+    setIsPreview(false);
+  };
+
+  const handleShare = async () => {
+    const link = await generateShareableLink(markdown);
+    setShareableLink(link);
   };
 
   return (
@@ -197,39 +363,135 @@ export const DashboardPage = () => {
         {loading && <p>Loading hospitals...</p>}
         {error && <p className="text-red-500">{error}</p>}
         {hospitals.length > 0 && (
-          <div className="mt-10  w-full md:p-10 p-4 ">
+          <div className="mt-10  w-full sm:p-10 p-4 ">
             <h2 className="text-xl mb-8 font-semibold w-full text-center">
               Hospital Results
             </h2>
-            <ul className=" flex gap-4 items-center flex-wrap w-full justify-center">
+            <ul className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {currentItems.map((hospital, index) => (
-                <Card className="w-[350px] h-[250px]">
-                  <CardHeader>
-                    <CardTitle className="text-lg font-semibold text-primary-dark">
-                      {" "}
-                      {hospital.name}
-                    </CardTitle>
-                  </CardHeader>
-
-                  <CardContent>
+                <Card className=" h-[280px]  flex flex-col justify-between hover:bg-gray-100 cursor-pointer">
+                  <div className="flex flex-col ">
                     {" "}
-                    <p className="text-sm text-neutral-500 flex items-center gap-2">
+                    <CardHeader>
+                      <CardTitle className="text-base font-semibold text-primary-dark">
+                        {" "}
+                        {hospital.name}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex flex-col ">
                       {" "}
-                      <span>
-                        <MapPinIcon width={16} />
-                      </span>{" "}
-                      {hospital.address}
-                    </p>
-                    <p className=" text-neutral-400 text-sm flex items-center gap-2 mt-2">
-                      <span>
-                        <PhoneIcon width={16} />
-                      </span>{" "}
-                      {hospital.phone_number}
-                    </p>
-                  </CardContent>
+                      <p className="text-sm text-neutral-500 flex items-center gap-2">
+                        {" "}
+                        <span>
+                          <MapPinIcon width={16} />
+                        </span>{" "}
+                        {hospital.address}
+                      </p>
+                      <p className=" text-neutral-400 text-sm flex items-center gap-2 mt-2">
+                        <span>
+                          <PhoneIcon width={16} />
+                        </span>{" "}
+                        {hospital.phone_number}
+                      </p>
+                    </CardContent>{" "}
+                  </div>
+                  <CardFooter className=" w-full h-fit">
+                    <div
+                      className="border border-gray-300 hover:border-none hover:bg-gray-200  h-10 w-10 flex items-center justify-center rounded-full"
+                      onClick={() => handleEditClick(hospital)}
+                    >
+                      <NotePencil size={16} />
+                    </div>
+                  </CardFooter>
                 </Card>
               ))}
             </ul>
+
+            <Dialog open={modalVisible} onOpenChange={setModalVisible}>
+              <DialogTrigger asChild>
+                <Button variant="outline" style={{ display: "none" }}>
+                  Edit
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[50%]">
+                <DialogHeader>
+                  <DialogTitle>
+                    {isPreview ? "Preview Content" : "Edit Hospital Details"}
+                  </DialogTitle>
+                </DialogHeader>
+                {isPreview ? (
+                  <>
+                    <ReactMarkdown>{markdown}</ReactMarkdown>
+                    <DialogFooter>
+                      <Button type="button" onClick={handleBackToEdit}>
+                        Back to Edit
+                      </Button>
+                      {shareableLink && (
+                        <p>
+                          Shareable Link:{" "}
+                          <a
+                            href={shareableLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {shareableLink}
+                          </a>
+                        </p>
+                      )}
+                    </DialogFooter>
+                  </>
+                ) : (
+                  <>
+                    {isImageUpload ? (
+                      <>
+                        <Input type="file" onChange={handleFileChange} />
+                        <DialogFooter>
+                          <Button type="submit" onClick={handleImageUpload}>
+                            Upload Image
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => setIsImageUpload(false)}
+                          >
+                            Back to Editor
+                          </Button>
+                        </DialogFooter>
+                      </>
+                    ) : (
+                      <>
+                        <MdEditor
+                          value={markdown}
+                          style={{ height: "300px" }}
+                          renderHTML={(text) => mdParser.render(text)}
+                          onChange={handleEditorChange}
+                        />
+                        <Button
+                          onClick={() => setIsImageUpload(true)}
+                          style={{ marginTop: "10px" }}
+                        >
+                          Add Image
+                        </Button>
+                        <Button
+                          onClick={handlePreview}
+                          style={{ marginTop: "10px" }}
+                        >
+                          Preview
+                        </Button>
+                        <DialogFooter>
+                          <Button
+                            type="button"
+                            onClick={() => setModalVisible(false)}
+                          >
+                            Close
+                          </Button>
+                        </DialogFooter>
+                      </>
+                    )}
+                  </>
+                )}
+              </DialogContent>
+            </Dialog>
+
             <Button className="my-8" onClick={exportToCSV}>
               Export to CSV
             </Button>
@@ -242,11 +504,6 @@ export const DashboardPage = () => {
             />
           </div>
         )}
-
-        <div>
-          <h1>Editor</h1>
-          <MarkdownEditor />
-        </div>
       </main>
       <div className="w-full flex md:flex-row flex-col md:h-[500px] mt-10">
         <Image src={location} alt="location" className="md:w-1/2 w-full" />
