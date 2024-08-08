@@ -57,7 +57,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import MarkdownEditor from "@/components/MarkdownEditor";
 import MarkdownIt from "markdown-it";
 import {
   Dialog,
@@ -359,7 +358,7 @@ export const DashboardPage = () => {
           <h1 className="text-2xl font-semibold">
             Search Hospitals within your locality
           </h1>
-          <div className="mb-4 flex flex-col md:flex-row gap-5 justify-center items-center w-full md:w-1/2">
+          <div className="mb-4 flex flex-col md:flex-row gap-4 justify-center items-center w-full md:w-full lg:w-1/2 md:px-10 lg:px-0">
             <Select value={state} onValueChange={(value) => setState(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select State" />
@@ -379,10 +378,19 @@ export const DashboardPage = () => {
               value={addressQuery}
               onChange={(e) => setAddressQuery(e.target.value)}
             />
+            <div className="flex gap-4 items-center w-full justify-center">
+              <Button className="w-full" onClick={handleFilter}>
+                Search
+              </Button>
 
-            <Button onClick={handleFilter}>Search</Button>
-
-            <Button onClick={handleResetFilters}>Reset</Button>
+              <Button
+                className="w-full"
+                variant={"outline"}
+                onClick={handleResetFilters}
+              >
+                Reset
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -393,7 +401,7 @@ export const DashboardPage = () => {
             <h2 className="text-xl mb-8 font-semibold w-full text-center">
               Hospital Results
             </h2>
-            <ul className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <ul className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {currentItems.map((hospital, index) => (
                 <Card
                   key={hospital.id}
