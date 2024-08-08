@@ -17,7 +17,6 @@ import {
   FacebookLogo,
   Hospital as HospitalIcon,
   InstagramLogo,
-  MagnifyingGlass,
   MapPin,
   MapPinArea,
   NotePencil,
@@ -36,7 +35,6 @@ import { useDebouncedCallback } from "use-debounce";
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -78,7 +76,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export const DashboardPage = () => {
+
+
+const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
@@ -114,10 +114,6 @@ export const DashboardPage = () => {
   const handleEditorChange = ({ text }: { text: string }) => {
     setMarkdown(text);
   };
-
-  // function handleEditorChange({ html, text }: { html: string; text: string }) {
-  //   console.log("handleEditorChange", html, text);
-  // }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
