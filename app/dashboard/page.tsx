@@ -13,10 +13,16 @@ import Image from "next/image";
 import location from "../../public/locationImage.jpg";
 import Link from "next/link";
 import {
+  Backspace,
   FacebookLogo,
+  Hospital as HospitalIcon,
   InstagramLogo,
   MagnifyingGlass,
+  MapPin,
+  MapPinArea,
   NotePencil,
+  Phone,
+  Share,
   XLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import {
@@ -62,9 +68,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import MdEditor from "react-markdown-editor-lite";
+
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import ReactMarkdown from "react-markdown";
-import { NotebookPenIcon } from "lucide-react";
+import "react-markdown-editor-lite/lib/index.css";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
@@ -80,12 +93,12 @@ export const DashboardPage = () => {
   );
   const [addressQuery, setAddressQuery] = useState<string>("");
   const [isImageUpload, setIsImageUpload] = useState(false);
-  const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [markdown, setMarkdown] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [mVisible, setMVisible] = useState(false);
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(
     null
   );
@@ -102,6 +115,10 @@ export const DashboardPage = () => {
   const handleEditorChange = ({ text }: { text: string }) => {
     setMarkdown(text);
   };
+
+  // function handleEditorChange({ html, text }: { html: string; text: string }) {
+  //   console.log("handleEditorChange", html, text);
+  // }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -129,7 +146,7 @@ export const DashboardPage = () => {
       setLoading(false);
     };
     fetchData();
-  }, [state]);
+  }, [state, addressQuery]);
 
   useEffect(() => {
     const loadStates = async () => {
@@ -198,6 +215,7 @@ export const DashboardPage = () => {
       setSelectedHospital(hospital);
       setModalVisible(true);
       setIsImageUpload(false);
+      setMVisible(false);
     }
   };
 
@@ -313,15 +331,23 @@ export const DashboardPage = () => {
       console.error("Error generating shareable link:", error);
     }
   };
+  const handleHospitalPreview = (hospital: Hospital) => {
+    setSelectedHospital(hospital);
+    setMVisible(true);
+  };
 
   const handleBackToEdit = () => {
     setIsPreview(false);
   };
-
-  const handleShare = async () => {
-    const link = await generateShareableLink(markdown);
-    setShareableLink(link);
+  const handleShare = () => {
+    const email = "recipient@example.com";
+    const subject = "Shared Hospital Details";
+    const body = encodeURIComponent(markdown);
+    const mailtoLink = `mailto:${email}?subject=${subject}&body=${body}`;
+    window.location.href = mailtoLink;
   };
+
+  const isLocation = selectedHospital?.location;
 
   return (
     <div className="h-screen mx-auto p-4 text-neutral-800">
@@ -369,11 +395,17 @@ export const DashboardPage = () => {
             </h2>
             <ul className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {currentItems.map((hospital, index) => (
-                <Card className=" h-[280px]  flex flex-col justify-between hover:bg-gray-100 cursor-pointer">
+                <Card
+                  key={hospital.id}
+                  className=" h-[280px]  flex flex-col justify-between hover:bg-gray-100 cursor-pointer"
+                >
                   <div className="flex flex-col ">
                     {" "}
                     <CardHeader>
-                      <CardTitle className="text-base font-semibold text-primary-dark">
+                      <CardTitle
+                        onClick={() => handleHospitalPreview(hospital)}
+                        className="hover:underline text-lg"
+                      >
                         {" "}
                         {hospital.name}
                       </CardTitle>
@@ -397,7 +429,7 @@ export const DashboardPage = () => {
                   </div>
                   <CardFooter className=" w-full h-fit">
                     <div
-                      className="border border-gray-300 hover:border-none hover:bg-gray-200  h-10 w-10 flex items-center justify-center rounded-full"
+                      className="border border-gray-300 hover:border-none hover:bg-gray-200  h-10 w-10 flex items-center justify-center rounded-full z-50"
                       onClick={() => handleEditClick(hospital)}
                     >
                       <NotePencil size={16} />
@@ -408,11 +440,6 @@ export const DashboardPage = () => {
             </ul>
 
             <Dialog open={modalVisible} onOpenChange={setModalVisible}>
-              <DialogTrigger asChild>
-                <Button variant="outline" style={{ display: "none" }}>
-                  Edit
-                </Button>
-              </DialogTrigger>
               <DialogContent className="sm:max-w-[50%]">
                 <DialogHeader>
                   <DialogTitle>
@@ -422,23 +449,38 @@ export const DashboardPage = () => {
                 {isPreview ? (
                   <>
                     <ReactMarkdown>{markdown}</ReactMarkdown>
-                    <DialogFooter>
-                      <Button type="button" onClick={handleBackToEdit}>
-                        Back to Edit
-                      </Button>
-                      {shareableLink && (
-                        <p>
-                          Shareable Link:{" "}
-                          <a
-                            href={shareableLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {shareableLink}
-                          </a>
-                        </p>
-                      )}
-                    </DialogFooter>
+
+                    <div className="flex gap-4">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button type="button" onClick={handleBackToEdit}>
+                              <Backspace />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p> Back to Edit</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleShare}
+                            >
+                              <Share />
+                            </Button>
+                          </TooltipTrigger>{" "}
+                          <TooltipContent>
+                            <p>Share</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <div className=" bg-green-200 h-auto flex"></div>
                   </>
                 ) : (
                   <>
@@ -461,7 +503,7 @@ export const DashboardPage = () => {
                       <>
                         <MdEditor
                           value={markdown}
-                          style={{ height: "300px" }}
+                          style={{ height: "300px", width: "700px" }}
                           renderHTML={(text) => mdParser.render(text)}
                           onChange={handleEditorChange}
                         />
@@ -477,20 +519,52 @@ export const DashboardPage = () => {
                         >
                           Preview
                         </Button>
-                        <DialogFooter>
-                          <Button
-                            type="button"
-                            onClick={() => setModalVisible(false)}
-                          >
-                            Close
-                          </Button>
-                        </DialogFooter>
                       </>
                     )}
                   </>
                 )}
               </DialogContent>
             </Dialog>
+
+            {selectedHospital && (
+              <Dialog open={mVisible} onOpenChange={setMVisible}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" style={{ display: "none" }}>
+                    View
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent className="sm:max-w-[50%]">
+                  <DialogHeader>
+                    <DialogTitle>{selectedHospital.name}</DialogTitle>
+                  </DialogHeader>
+                  <p className="text-neutral-400 text-sm flex items-center gap-2 mt-2">
+                    <span>
+                      <HospitalIcon width={16} />
+                    </span>
+                    {selectedHospital.type.name}
+                  </p>
+                  <p className="text-sm text-neutral-500 flex items-center gap-2">
+                    <span>
+                      <MapPin width={16} />
+                    </span>
+                    {selectedHospital.address}
+                  </p>
+                  <p className="text-sm text-neutral-500 flex items-center gap-2">
+                    <span>
+                      <MapPinArea width={16} />
+                    </span>
+                    {isLocation ? selectedHospital.location : "N/A"}
+                  </p>
+                  <p className="text-neutral-400 text-sm flex items-center gap-2 mt-2">
+                    <span>
+                      <Phone width={16} />
+                    </span>
+                    {selectedHospital.phone_number}
+                  </p>
+                </DialogContent>
+              </Dialog>
+            )}
 
             <Button className="my-8" onClick={exportToCSV}>
               Export to CSV
