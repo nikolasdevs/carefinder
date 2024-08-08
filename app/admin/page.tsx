@@ -48,7 +48,7 @@ const AdminPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await fetchHospitalData(state);
+      const data = await fetchHospitalData("", state, "");
       if (data) {
         setHospitals(data);
         setFilteredHospitals(data);
