@@ -68,8 +68,8 @@ function MarkdownEditor() {
         img.src = event.target?.result as string;
 
         img.onload = () => {
-          const MAX_WIDTH = 800; // Adjust maximum width as needed
-          const MAX_HEIGHT = 600; // Adjust maximum height as needed
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 600;
           let width = img.width;
           let height = img.height;
 
@@ -146,6 +146,7 @@ function MarkdownEditor() {
             <Button type="submit" onClick={handleImageUpload}>
               Upload Image
             </Button>
+           
           </DialogFooter>
         </DialogContent>
       </Dialog>
