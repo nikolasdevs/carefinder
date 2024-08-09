@@ -67,7 +67,7 @@ const Login = () => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
-        router.push("/someProtectedRoute"); // Adjust the route as necessary
+        router.push("/dashboard"); // Adjust the route as necessary
       } else {
         setUser(null);
       }
