@@ -171,7 +171,7 @@ const Register = () => {
           <span>
             <Image src={googleLogo} width={16} height={16} alt="google logo" />
           </span>
-          Sign up with Google
+          Register with Google
         </Button>
       </div>
     </div>
