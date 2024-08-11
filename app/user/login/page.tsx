@@ -91,12 +91,12 @@ const Login = () => {
 
   return (
     <>
-      <div className="w-full flex md:flex-row flex-col items-center justify-center h-screen  md:gap-1">
-        <div className="hidden md:flex flex-col md:w-1/3 items-center justify-center h-auto px-8 ">
-          <Image src={authImg} alt="hospital vehicle " />
+      <div className="w-full flex md:flex-row flex-col items-center justify-center h-screen px-4  md:gap-1">
+        <div className="hidden md:flex flex-col md:w-1/2 items-center justify-center h-auto px-8 ">
+          <Image src={authImg} alt="hospital vehicle" />
         </div>
 
-        <div className="flex flex-col md:max-w-1/2 items-center justify-center h-auto px-8 border rounded-lg  py-8">
+        <div className="flex flex-col md:w-1/3 w-full items-center justify-center h-auto px-8 border rounded-lg  py-8 ">
           <div className="mb-4">
             <h1 className="text-[1.5rem] font-semibold">Login</h1>
           </div>
@@ -153,8 +153,8 @@ const Login = () => {
               Register
             </Link>
           </div>
-          <div className="md:my-8 my-6 before:mr-4 before:w-32 before:h-[.7px] before:bg-gray-200 after:w-32 after:h-[.7px] after:bg-gray-200 flex items-center justify-center after:ml-4 text-xs w-full">
-            Or continue with
+          <div className="md:my-8 my-6 before:mr-4 before:w-24 before:h-[0.5px] before:bg-gray-200 after:w-24 after:h-[0.5px] after:bg-gray-200 flex items-center justify-center after:ml-4 text-xs w-full">
+            OR
           </div>
           <Button className="flex gap-3 w-full" onClick={handleGoogle}>
             <span>
