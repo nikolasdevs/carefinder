@@ -3,6 +3,9 @@ import React, { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../firebase/config";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { getErrorMessage } from "@/utils/errorHandler";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -16,6 +19,9 @@ const AdminLogin = () => {
       await signInWithEmailAndPassword(auth, email, password);
       router.push("/admin");
     } catch (error) {
+      const errorMessage = getErrorMessage(e);
+      console.error(errorMessage);
+      alert(errorMessage);
       setError("Failed to log in. Please check your credentials.");
     }
   };
@@ -24,7 +30,7 @@ const AdminLogin = () => {
     <div className="h-screen flex flex-col items-center justify-center text-neutral-800 bg-primary-medium">
       <h1 className="text-2xl font-semibold mb-4">Admin Login</h1>
       <form onSubmit={handleLogin} className="flex flex-col gap-4">
-        <input
+        <Input
           type="email"
           placeholder="Email"
           value={email}
@@ -32,7 +38,7 @@ const AdminLogin = () => {
           className="input"
           required
         />
-        <input
+        <Input
           type="password"
           placeholder="Password"
           value={password}
@@ -40,9 +46,9 @@ const AdminLogin = () => {
           className="input"
           required
         />
-        <button type="submit" className="auth-btn">
+        <Button type="submit" className="auth-btn">
           Login
-        </button>
+        </Button>
       </form>
       {error && <p className="text-red-500 mt-4">{error}</p>}
     </div>
