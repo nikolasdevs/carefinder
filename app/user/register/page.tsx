@@ -157,12 +157,15 @@ const Register = () => {
         </FormProvider>
         <div className="flex mt-2 gap-2 items-center text-sm w-full">
           <p>Already have an account?</p>
-          <Link href="/login" className="text-primary-dark hover:font-medium">
+          <Link
+            href="/user/login"
+            className="text-primary-dark hover:font-medium"
+          >
             Login
           </Link>
         </div>
         <div className="md:my-8 my-6 before:mr-4 before:w-32 before:h-[.7px] before:bg-gray-200 after:w-32 after:h-[.7px] after:bg-gray-200 flex items-center justify-center after:ml-4 text-sm w-full">
-          OR CONTINUE WITH
+          Or continue with
         </div>
         <Button className="flex gap-3 w-full" onClick={handleGoogle}>
           <span>
