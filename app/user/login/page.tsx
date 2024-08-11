@@ -138,7 +138,7 @@ const Login = () => {
                 className="auth-btn"
                 disabled={isSubmitting}
               >
-                Sign in
+                Log in
               </Button>
               {error && <p className="text-danger">{error}</p>}
               {message && <p className="text-success">{message}</p>}
