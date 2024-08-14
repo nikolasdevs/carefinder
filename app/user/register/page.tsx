@@ -27,6 +27,9 @@ import { registerSchema } from "@/utils/validationSchema";
 import { z } from "zod";
 import authImg from "../../../public/heroImg.png";
 import { auth } from "@/app/firebase/config";
+import Logo from "../../../public/logo.png";
+import { motion } from "framer-motion";
+import { ModeToggle } from "@/components/theme-toggle";
 
 type RegisterFormInputs = z.infer<typeof registerSchema>;
 
@@ -93,88 +96,133 @@ const Register = () => {
   };
 
   return (
-    <div className="w-full flex md:flex-row flex-col items-center justify-center h-screen px-4  md:gap-1">
-      <div className="hidden md:flex flex-col md:w-1/2 items-center justify-center h-auto px-8 ">
-        <Image src={authImg} alt="hospital vehicle " />
-      </div>
-      <div className="flex flex-col md:w-1/3 w-full  items-center justify-center h-auto px-8 border rounded-lg  py-8">
-        <div className="mb-4  ">
-          <h1 className="text-[1.5rem] font-semibold">Register</h1>
-        </div>
-        <FormProvider {...methods}>
-          <form
-            className="flex flex-col gap-4 w-full"
-            onSubmit={handleSubmit(onSubmit)}
-          >
-            <FormField
-              control={methods.control}
-              name="email"
-              render={({ field }: { field: any }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder="Email" {...field} />
-                  </FormControl>
-                  <FormMessage>{errors.email?.message}</FormMessage>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={methods.control}
-              name="password"
-              render={({ field }: { field: any }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input type="password" placeholder="Password" {...field} />
-                  </FormControl>
-
-                  <FormMessage>{errors.password?.message}</FormMessage>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={methods.control}
-              name="confirmPassword"
-              render={({ field }: { field: any }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Confirm Password"
-                      {...field}
-                    />
-                  </FormControl>
-
-                  <FormMessage>{errors.confirmPassword?.message}</FormMessage>
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="auth-btn" disabled={isSubmitting}>
-              Sign up
-            </Button>
-            {error && <p className="text-danger">{error}</p>}
-            {message && <p className="text-success">{message}</p>}
-          </form>
-        </FormProvider>
-        <div className="flex mt-2 gap-2 items-center text-sm w-full">
-          <p>Already have an account?</p>
-          <Link
-            href="/user/login"
-            className="text-primary-dark hover:font-medium"
-          >
-            Login
+    <>
+      <div className="flex flex-col w-full h-screen p-10">
+        <div className=" flex justify-between items-center">
+          <Link href="/" className=" w-32">
+            <Image src={Logo} alt="hero" />
           </Link>
+          <ModeToggle/> 
         </div>
-        <div className="md:my-8 my-6 before:mr-4 before:w-24 before:h-[0.5px] before:bg-gray-200 after:w-24 after:h-[0.5px] after:bg-gray-200 flex items-center justify-center after:ml-4 text-sm w-full">
-          OR
+        <div className="w-full flex md:flex-row flex-col items-center justify-center h-screen px-4  md:gap-1">
+          <div className="hidden md:flex  flex-col md:w-1/2 items-center justify-center ">
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{
+                duration: 1,
+                ease: "easeInOut",
+              }}
+            >
+              <div className="gap-3 flex flex-col  items-center justify-center text-center h-80  w-80 leading-normal">
+                <h2 className=" font-semibold">Welcome to Carefinder!</h2>
+                <p className=" flex flex-col gap-3 items-center justify-center">
+                  Join us in our mission to enhance healthcare accessibility for
+                  everyone. Together, we can make a difference in countless
+                  lives.
+                  <span className=" w-24 h-[2px] bg-primary "></span>
+                </p>
+              </div>
+            </motion.div>
+          </div>
+          <div className="flex flex-col md:w-1/3 w-full  items-center justify-center h-auto px-8 border rounded-lg  py-8">
+            <div className="mb-4  ">
+              <h1 className="text-[1.5rem] font-semibold">Register</h1>
+            </div>
+            <FormProvider {...methods}>
+              <form
+                className="flex flex-col gap-4 w-full"
+                onSubmit={handleSubmit(onSubmit)}
+              >
+                <FormField
+                  control={methods.control}
+                  name="email"
+                  render={({ field }: { field: any }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input placeholder="Email" {...field} />
+                      </FormControl>
+                      <FormMessage>{errors.email?.message}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={methods.control}
+                  name="password"
+                  render={({ field }: { field: any }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Password"
+                          {...field}
+                        />
+                      </FormControl>
+
+                      <FormMessage>{errors.password?.message}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={methods.control}
+                  name="confirmPassword"
+                  render={({ field }: { field: any }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input
+                          type="password"
+                          placeholder="Confirm Password"
+                          {...field}
+                        />
+                      </FormControl>
+
+                      <FormMessage>
+                        {errors.confirmPassword?.message}
+                      </FormMessage>
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="auth-btn"
+                  disabled={isSubmitting}
+                >
+                  Sign up
+                </Button>
+                {error && <p className="text-danger">{error}</p>}
+                {message && <p className="text-success">{message}</p>}
+              </form>
+            </FormProvider>
+            <div className="flex mt-2 gap-2 items-center text-sm w-full">
+              <p>Already have an account?</p>
+              <Link
+                href="/user/login"
+                className="text-primary-dark hover:font-medium"
+              >
+                Login
+              </Link>
+            </div>
+            <div className="md:my-8 my-6 before:mr-4 before:w-24 before:h-[0.5px] before:bg-gray-200 after:w-24 after:h-[0.5px] after:bg-gray-200 flex items-center justify-center after:ml-4 text-sm w-full">
+              OR
+            </div>
+            <Button
+              className="flex gap-3 w-full bg-foreground"
+              onClick={handleGoogle}
+            >
+              <span>
+                <Image
+                  src={googleLogo}
+                  width={16}
+                  height={16}
+                  alt="google logo"
+                />
+              </span>
+              Register with Google
+            </Button>
+          </div>
         </div>
-        <Button className="flex gap-3 w-full" onClick={handleGoogle}>
-          <span>
-            <Image src={googleLogo} width={16} height={16} alt="google logo" />
-          </span>
-          Register with Google
-        </Button>
       </div>
-    </div>
+    </>
   );
 };
 

@@ -8,11 +8,10 @@ import {
   doc,
   updateDoc,
   getDocs,
+  getDoc,
 } from "firebase/firestore";
-import { firestore } from "../firebase/config";
-import AdminNavbar from "../AdminNavbar";
-import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { DotsThreeOutlineVertical } from "@phosphor-icons/react";
+import { auth, firestore } from "../firebase/config";
+import AdminNavbar from "../../components/AdminNavbar";
 import {
   fetchHospitalData,
   filterHospitalsByState,
@@ -21,6 +20,38 @@ import {
 } from "../lib/fetchHospital";
 import { fetchStates } from "../lib/fetchStates";
 import MarkdownEditor from "../EditHospital";
+import { onAuthStateChanged, User } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { DotsThreeVertical } from "@phosphor-icons/react/dist/ssr";
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Delete, Edit } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 function isHospital(data: any): data is Hospital {
   return (
@@ -34,17 +65,43 @@ function isHospital(data: any): data is Hospital {
     typeof data.type === "object"
   );
 }
+
 const AdminPage = () => {
+  const [admin, setAdmin] = useState<User | null>(null);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
-  const [filteredHospitals, setFilteredHospitals] = useState<Hospital[]>([]);
+  const [filteredHospitals, setFilteredHospitals] =
+    useState<Hospital[]>(hospitals);
   const [state, setState] = useState<string>("");
   const [states, setStates] = useState<{ id: string; name: string }[]>([]);
   const [types, setTypes] = useState<Type[]>([]);
   const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(
     null
   );
-  const [showForm, setShowForm] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false); // State to control the dialog
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const lastItemIndex = currentPage * itemsPerPage;
+  const firstItemIndex = lastItemIndex - itemsPerPage;
+  const currentItems = filteredHospitals.slice(firstItemIndex, lastItemIndex);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (admin) => {
+      if (admin) {
+        setAdmin(admin);
+        const userDoc = await getDoc(doc(firestore, "users", admin.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+        }
+      } else {
+        router.push("/admin/adminLogin");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -104,7 +161,7 @@ const AdminPage = () => {
 
   const handleAddNew = () => {
     setSelectedHospitalId(null);
-    setShowForm(true);
+    setDialogOpen(true);
   };
 
   const handleAddHospital = async (newHospital: Hospital) => {
@@ -116,7 +173,7 @@ const AdminPage = () => {
         ...filteredHospitals,
         { ...newHospital, id: newHospitalRef.id },
       ]);
-      setShowForm(false);
+      setDialogOpen(false);
     } catch (error) {
       console.error("Error adding hospital:", error);
     }
@@ -138,8 +195,7 @@ const AdminPage = () => {
       );
       setHospitals(updatedList);
       setFilteredHospitals(updatedList);
-      setShowForm(false);
-      setSelectedHospitalId(null);
+      setDialogOpen(false);
     } catch (error) {
       console.error("Error updating hospital:", error);
     }
@@ -147,7 +203,7 @@ const AdminPage = () => {
 
   const handleEdit = (id: string | null) => {
     setSelectedHospitalId(id);
-    setShowForm(true);
+    setDialogOpen(true);
   };
 
   const handleSave = (hospital: Hospital) => {
@@ -159,7 +215,7 @@ const AdminPage = () => {
   };
 
   const handleCancel = () => {
-    setShowForm(false);
+    setDialogOpen(false);
     setSelectedHospitalId(null);
   };
 
@@ -171,7 +227,7 @@ const AdminPage = () => {
         setFilteredHospitals(
           filteredHospitals.filter((hospital) => hospital.id !== id)
         );
-        setShowForm(false);
+        setDialogOpen(false);
         setSelectedHospitalId(null);
       } catch (error) {
         console.error("Error deleting hospital:", error);
@@ -182,133 +238,142 @@ const AdminPage = () => {
   const selectedHospital =
     hospitals.find((hospital) => hospital.id === selectedHospitalId) ||
     undefined;
+
   return (
-    <div className="w-full h-full px-8 py-4 overflow-hidden">
+    <div className="w-full">
       <AdminNavbar />
-      <div className="w-full h-[calc(100%-3rem)] flex flex-col gap-4">
-        <div className="w-full h-10 flex items-center gap-2">
+      <div className="w-full h-[calc(100%-3rem)] flex flex-col px-8">
+        <div className="w-full flex items-center gap-2 my-5">
           {loading ? (
             <p>Loading...</p>
           ) : (
             <>
-              <select
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                className="px-4 py-1.5 text-sm rounded-lg outline-none bg-white border border-solid border-gray-300"
-              >
-                <option value="">All States</option>
-                {states.map((state) => (
-                  <option key={state.id} value={state.id}>
-                    {state.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="px-4 py-1.5 text-sm rounded-lg outline-none text-white bg-blue-500"
-                onClick={handleFilterByState}
-              >
-                Filter
-              </button>
-              <button
-                className="px-4 py-1.5 text-sm rounded-lg outline-none text-white bg-blue-500"
-                onClick={handleResetFilters}
-              >
-                Reset Filters
-              </button>
-              <button
-                className="px-4 py-1.5 text-sm rounded-lg outline-none text-white bg-green-500"
-                onClick={handleAddNew}
-              >
-                Add New Hospital
-              </button>
+              <Select value={state} onValueChange={(value) => setState(value)}>
+                <SelectTrigger className=" w-40">
+                  <SelectValue placeholder="Select State" />
+                </SelectTrigger>
+                <SelectContent>
+                  {states.map((state) => (
+                    <SelectItem key={state.id} value={state.name}>
+                      {state.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex w-full gap-4 items-center justify-between">
+                <div className="flex gap-2 items-center">
+                  <Button className="" onClick={handleFilterByState}>
+                    Filter
+                  </Button>
+                  <Button className="" onClick={handleResetFilters}>
+                    Reset Filters
+                  </Button>
+                </div>
+                <Button className="" onClick={handleAddNew}>
+                  Add New Hospital
+                </Button>
+              </div>
             </>
           )}
         </div>
-
-        {showForm && (
-          <MarkdownEditor
-            hospitalData={selectedHospital}
-            onSave={handleSave}
-            onCancel={handleCancel}
-            onDelete={() => handleDelete(selectedHospitalId)}
-          />
-        )}
-
-        <div className="w-full h-full overflow-y-auto rounded-lg border border-solid border-gray-300">
-          <table className="w-full h-full text-sm">
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-center mb-3">
+                {selectedHospitalId ? "Edit Hospital" : "Add New Hospital"}
+              </DialogTitle>
+            </DialogHeader>
+            <MarkdownEditor
+              hospitalData={selectedHospital}
+              onSave={(hospital) => {
+                handleSave(hospital);
+                setDialogOpen(false);
+              }}
+              onCancel={() => setDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+        <div className=" w-full overflow-y-auto rounded-lg border border-solid border-gray-300">
+          <table className=" text-sm w-full table-fixed">
             <thead className="sticky top-0 bg-gray-100">
               <tr className="h-10 text-left">
-                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                <th className="px-4 border-b border-solid border-gray-300 w-1/6 truncate">
                   Name
                 </th>
-                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                <th className="px-4 border-b border-solid border-gray-300 w-1/4 truncate">
                   Address
                 </th>
-                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                <th className="px-4 border-b border-solid border-gray-300 w-1/6 truncate">
                   Phone Number
                 </th>
-                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                <th className="px-4 border-b border-solid border-gray-300 w-1/6 truncate">
                   Location
                 </th>
-                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                <th className="px-4 border-b border-solid border-gray-300 w-1/12 truncate">
                   State
                 </th>
-                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                <th className="px-4 border-b border-solid border-gray-300 w-1/12 truncate">
                   Type
                 </th>
-                <th className="px-4 border-b border-solid border-gray-300 whitespace-nowrap">
+                <th className="px-4 border-b border-solid border-gray-300 w-1/12 truncate">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filteredHospitals.map((hospital) => (
-                <tr key={hospital.id} className="h-10">
-                  <td className="px-4 border-b border-solid border-gray-300">
+              {currentItems.map((hospital) => (
+                <tr key={hospital.id} className="h-12">
+                  <td className="px-4 border-b border-solid border-gray-300 truncate">
                     {hospital.name}
                   </td>
-                  <td className="px-4 border-b border-solid border-gray-300">
+                  <td className="px-4 border-b border-solid border-gray-300 truncate">
                     {hospital.address}
                   </td>
-                  <td className="px-4 border-b border-solid border-gray-300">
+                  <td className="px-4 border-b border-solid border-gray-300 truncate">
                     {hospital.phone_number}
                   </td>
-                  <td className="px-4 border-b border-solid border-gray-300">
+                  <td className="px-4 border-b border-solid border-gray-300 truncate">
                     {hospital.location}
                   </td>
-                  <td className="px-4 border-b border-solid border-gray-300">
+                  <td className="px-4 border-b border-solid border-gray-300 truncate">
                     {hospital.state?.name || "N/A"}
                   </td>
-                  <td className="px-4 border-b border-solid border-gray-300">
+                  <td className="px-4 border-b border-solid border-gray-300 truncate">
                     {hospital.type?.name || "N/A"}
                   </td>
-                  <td className="px-4 border-b border-solid border-gray-300">
-                    <Menu>
-                      <MenuButton className="outline-none">
-                        <DotsThreeOutlineVertical className="w-6 h-6" />
-                      </MenuButton>
-                      <MenuItems className="flex flex-col items-start gap-2 w-36 py-2 bg-white shadow-lg rounded-md border border-solid border-gray-300">
-                        <MenuItem
-                          as="button"
-                          className="w-full px-3 text-left text-xs hover:bg-gray-100"
+                  <td className="px-4 border-b border-solid border-gray-300 truncate">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <DotsThreeVertical className="w-6 h-6" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="">
+                        <DropdownMenuItem
                           onClick={() => handleEdit(hospital.id)}
                         >
-                          Edit
-                        </MenuItem>
-                        <MenuItem
-                          as="button"
-                          className="w-full px-3 text-left text-xs hover:bg-gray-100"
+                          <Edit className="mr-2 h-4 w-4" />
+                          <span> Edit</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => handleDelete(hospital.id)}
                         >
-                          Delete
-                        </MenuItem>
-                      </MenuItems>
-                    </Menu>
+                          <Delete className="mr-2 h-4 w-4" />
+                          <span>Delete</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>{" "}
+        <div className="mt-3 mb-6">
+          <PaginationSection
+            totalItems={filteredHospitals.length}
+            itemsPerPage={itemsPerPage}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
         </div>
       </div>
     </div>
@@ -316,3 +381,69 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
+
+function PaginationSection({
+  totalItems,
+  itemsPerPage,
+  currentPage,
+  setCurrentPage,
+}: {
+  totalItems: any;
+  itemsPerPage: any;
+  currentPage: any;
+  setCurrentPage: any;
+}) {
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const maxPagesToShow = 6;
+  let pages = [];
+
+  const startPage = Math.max(currentPage - Math.floor(maxPagesToShow / 2), 1);
+  const endPage = Math.min(startPage + maxPagesToShow - 1, totalPages);
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  return (
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            isActive={currentPage === 1}
+            onClick={handlePrevPage}
+          />
+        </PaginationItem>
+
+        {pages.map((page) => (
+          <PaginationItem key={page}>
+            <PaginationLink
+              isActive={currentPage === page}
+              onClick={() => setCurrentPage(page)}
+            >
+              {page}
+            </PaginationLink>
+          </PaginationItem>
+        ))}
+
+        <PaginationItem>
+          <PaginationNext
+            isActive={currentPage === totalPages}
+            onClick={handleNextPage}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  );
+}

@@ -9,6 +9,15 @@ import {
   addDoc,
 } from "firebase/firestore";
 import { fetchStates } from "./lib/fetchStates";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const firestore = getFirestore();
 
@@ -16,14 +25,12 @@ interface MarkdownEditorProps {
   hospitalData?: Hospital;
   onSave: (hospital: Hospital) => void;
   onCancel: () => void;
-  onDelete: () => void;
 }
 
 const MarkdownEditor = ({
   hospitalData,
   onSave,
   onCancel,
-  onDelete,
 }: MarkdownEditorProps) => {
   const [hospital, setHospital] = useState<Hospital>({
     id: hospitalData?.id || "",
@@ -38,6 +45,7 @@ const MarkdownEditor = ({
   const [states, setStates] = useState<{ id: string; name: string }[]>([]);
   const [types, setTypes] = useState<{ id: string; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<string>("");
 
   useEffect(() => {
     const fetchStatesData = async () => {
@@ -118,72 +126,104 @@ const MarkdownEditor = ({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        name="name"
-        value={hospital.name}
-        onChange={handleInputChange}
-        className="input"
-        placeholder="Hospital Name"
-      />
-      <input
-        name="address"
-        value={hospital.address}
-        onChange={handleInputChange}
-        placeholder="Address"
-        className="input"
-      />
-      <input
-        name="phone_number"
-        value={hospital.phone_number}
-        onChange={handleInputChange}
-        placeholder="Phone Number"
-        className="input"
-      />
-      <input
-        name="location"
-        value={hospital.location}
-        onChange={handleInputChange}
-        placeholder="Location"
-        className="input"
-      />
-      <select
-        name="state"
-        value={hospital.state.id}
-        onChange={handleSelectChange}
-        className="input"
-      >
-        <option value="">Select State</option>
-        {states.map((state) => (
-          <option key={state.id} value={state.id}>
-            {state.name}
-          </option>
-        ))}
-      </select>
-      {/* <select
-        name="type"
-        value={hospital.type.id}
-        onChange={handleSelectChange}
-        className="input"
-      >
-        <option value="">Select Type</option>
-        {types.map((type) => (
-          <option key={type.id} value={type.id}>
-            {type.name}
-          </option>
-        ))}
-      </select> */}
-      <button type="submit">Save</button>
-      <button type="button" onClick={onCancel}>
-        Cancel
-      </button>
-      {hospitalData && (
-        <button type="button" onClick={onDelete}>
-          Delete
-        </button>
-      )}
-      {error && <p className="error">{error}</p>}
-    </form>
+    <>
+      <div className=" flex flex-col items-center justify-center w-full">
+        <form
+          onSubmit={handleSubmit}
+          className=" flex flex-col  z-50 w-full items-center gap-2 "
+        >
+          <Input
+            name="name"
+            value={hospital.name}
+            onChange={handleInputChange}
+            className="input"
+            placeholder="Hospital Name"
+          />
+          <Input
+            name="address"
+            value={hospital.address}
+            onChange={handleInputChange}
+            placeholder="Address"
+            className="input"
+          />
+          <Input
+            name="phone_number"
+            value={hospital.phone_number}
+            onChange={handleInputChange}
+            placeholder="Phone Number"
+            className="input"
+          />
+          <Input
+            name="location"
+            value={hospital.location}
+            onChange={handleInputChange}
+            placeholder="Location"
+            className="input"
+          />
+
+          <Select
+            name="state"
+            value={hospital.state.id}
+            onValueChange={(value) =>
+              setHospital((prevHospital) => ({
+                ...prevHospital,
+                state: { id: value, name: value },
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select State" />
+            </SelectTrigger>
+            <SelectContent>
+              {states.map((state) => (
+                <SelectItem key={state.id} value={state.name}>
+                  {state.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            name="type"
+            value={hospital.type.id}
+            onValueChange={(value) =>
+              setHospital((prevHospital) => ({
+                ...prevHospital,
+                type: {
+                  id: value,
+                  name: types.find((t) => t.id === value)?.name || "",
+                },
+              }))
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {types.map((type) => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className=" mt-4 flex w-full gap-4">
+            <Button type="submit" className="w-full">
+              Save
+            </Button>
+            <Button
+              type="button"
+              className="w-full"
+              variant="outline"
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          </div>
+          {error && <p className="error">{error}</p>}
+        </form>
+      </div>
+    </>
   );
 };
 
