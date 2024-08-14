@@ -90,7 +90,7 @@ export const useAuth = create<Auth & Actions>((set) => ({
         email: "",
         password: "",
         confirmPassword: "",
-        message: "Signup successful. Please verify your email.",
+        message: "",
         error: "",
       });
     } catch (e) {
