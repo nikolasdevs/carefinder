@@ -111,12 +111,12 @@ const Login = () => {
               }}
             >
               <p className="gap-3 flex flex-col  items-center justify-center text-center h-80 text-sm w-80 leading-normal">
-                At Carefinder, we're dedicated to revolutionizing healthcare
-                accessibility for everyone. Our user-friendly platform allows
-                you to effortlessly locate top hospitals nearby, export their
-                details, and share this vital information with those who need it
-                most. Join us in improving healthcare access and making a
-                positive impact on countless lives.{" "}
+                At Carefinder, we&apos;re dedicated to revolutionizing
+                healthcare accessibility for everyone. Our user-friendly
+                platform allows you to effortlessly locate top hospitals nearby,
+                export their details, and share this vital information with
+                those who need it most. Join us in improving healthcare access
+                and making a positive impact on countless lives.{" "}
                 <span className=" w-24 h-[2px] bg-primary "></span>
               </p>{" "}
             </motion.div>
