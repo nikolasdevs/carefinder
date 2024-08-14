@@ -97,14 +97,14 @@ const Register = () => {
 
   return (
     <>
-      <div className="flex flex-col w-full h-screen p-10">
+      <div className="flex flex-col w-full h-screen md:p-10 p-5">
         <div className=" flex justify-between items-center">
           <Link href="/" className=" w-32">
             <Image src={Logo} alt="hero" />
           </Link>
-          <ModeToggle/> 
+          <ModeToggle />
         </div>
-        <div className="w-full flex md:flex-row flex-col items-center justify-center h-screen px-4  md:gap-1">
+        <div className="w-full flex md:flex-row flex-col items-center justify-center h-screen px-4  md:gap-10">
           <div className="hidden md:flex  flex-col md:w-1/2 items-center justify-center ">
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
@@ -125,100 +125,103 @@ const Register = () => {
               </div>
             </motion.div>
           </div>
-          <div className="flex flex-col md:w-1/3 w-full  items-center justify-center h-auto px-8 border rounded-lg  py-8">
-            <div className="mb-4  ">
-              <h1 className="text-[1.5rem] font-semibold">Register</h1>
-            </div>
-            <FormProvider {...methods}>
-              <form
-                className="flex flex-col gap-4 w-full"
-                onSubmit={handleSubmit(onSubmit)}
-              >
-                <FormField
-                  control={methods.control}
-                  name="email"
-                  render={({ field }: { field: any }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input placeholder="Email" {...field} />
-                      </FormControl>
-                      <FormMessage>{errors.email?.message}</FormMessage>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={methods.control}
-                  name="password"
-                  render={({ field }: { field: any }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Password"
-                          {...field}
-                        />
-                      </FormControl>
 
-                      <FormMessage>{errors.password?.message}</FormMessage>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={methods.control}
-                  name="confirmPassword"
-                  render={({ field }: { field: any }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="Confirm Password"
-                          {...field}
-                        />
-                      </FormControl>
-
-                      <FormMessage>
-                        {errors.confirmPassword?.message}
-                      </FormMessage>
-                    </FormItem>
-                  )}
-                />
-                <Button
-                  type="submit"
-                  className="auth-btn"
-                  disabled={isSubmitting}
+          <div className="flex flex-col md:w-1/2 w-full  items-center justify-center h-auto">
+            <div className="md:w-4/6 w-full  border rounded-lg p-8 ">
+              <div className="mb-8">
+                <h1 className="text-[1.5rem] font-semibold">Register</h1>
+              </div>
+              <FormProvider {...methods}>
+                <form
+                  className="flex flex-col gap-4 w-full"
+                  onSubmit={handleSubmit(onSubmit)}
                 >
-                  Sign up
-                </Button>
-                {error && <p className="text-danger">{error}</p>}
-                {message && <p className="text-success">{message}</p>}
-              </form>
-            </FormProvider>
-            <div className="flex mt-2 gap-2 items-center text-sm w-full">
-              <p>Already have an account?</p>
-              <Link
-                href="/user/login"
-                className="text-primary-dark hover:font-medium"
+                  <FormField
+                    control={methods.control}
+                    name="email"
+                    render={({ field }: { field: any }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input placeholder="Email" {...field} />
+                        </FormControl>
+                        <FormMessage>{errors.email?.message}</FormMessage>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={methods.control}
+                    name="password"
+                    render={({ field }: { field: any }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Password"
+                            {...field}
+                          />
+                        </FormControl>
+
+                        <FormMessage>{errors.password?.message}</FormMessage>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={methods.control}
+                    name="confirmPassword"
+                    render={({ field }: { field: any }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Confirm Password"
+                            {...field}
+                          />
+                        </FormControl>
+
+                        <FormMessage>
+                          {errors.confirmPassword?.message}
+                        </FormMessage>
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="submit"
+                    className="auth-btn"
+                    disabled={isSubmitting}
+                  >
+                    Sign up
+                  </Button>
+                  {error && <p className="text-danger">{error}</p>}
+                  {message && <p className="text-success">{message}</p>}
+                </form>
+              </FormProvider>
+              <div className="flex mt-2 gap-2 items-center text-sm w-full">
+                <p>Already have an account?</p>
+                <Link
+                  href="/user/login"
+                  className="text-primary-dark hover:font-medium"
+                >
+                  Login
+                </Link>
+              </div>
+              <div className="md:my-8 my-6 before:mr-4 before:w-24 before:h-[0.5px] before:bg-gray-200 after:w-24 after:h-[0.5px] after:bg-gray-200 flex items-center justify-center after:ml-4 text-sm w-full">
+                OR
+              </div>
+              <Button
+                className="flex gap-3 w-full border border-primary bg-transparent text-primary hover:bg-gray-100 hover:border-0"
+                onClick={handleGoogle}
               >
-                Login
-              </Link>
+                <span>
+                  <Image
+                    src={googleLogo}
+                    width={16}
+                    height={16}
+                    alt="google logo"
+                  />
+                </span>
+                Register with Google
+              </Button>
             </div>
-            <div className="md:my-8 my-6 before:mr-4 before:w-24 before:h-[0.5px] before:bg-gray-200 after:w-24 after:h-[0.5px] after:bg-gray-200 flex items-center justify-center after:ml-4 text-sm w-full">
-              OR
-            </div>
-            <Button
-              className="flex gap-3 w-full bg-foreground"
-              onClick={handleGoogle}
-            >
-              <span>
-                <Image
-                  src={googleLogo}
-                  width={16}
-                  height={16}
-                  alt="google logo"
-                />
-              </span>
-              Register with Google
-            </Button>
           </div>
         </div>
       </div>
