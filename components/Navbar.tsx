@@ -84,7 +84,7 @@ export default function Navbar() {
                 <MenubarItem>
                   {" "}
                   <UserMenu className="mr-2 h-4 w-4" />
-                  <Link href="/user/profile">Profile</Link>
+                  <Link href="/user">Profile</Link>
                 </MenubarItem>
                 <MenubarItem>
                   <Settings className="mr-2 h-4 w-4" />
