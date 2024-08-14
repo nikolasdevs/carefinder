@@ -18,7 +18,7 @@ export default function Home() {
           </div>{" "}
           <ModeToggle />
         </div>
-        <div className="h-screen w-full flex flex-col items-center justify-center">
+        <div className="h-screen w-full flex flex-col items-center mt-10">
           <div className="w-full flex flex-col items-center text-center ">
             <motion.div
               initial="hidden"
@@ -37,15 +37,36 @@ export default function Home() {
                 },
               }}
             >
-              <h1 className="text-6xl font-bold  leading-snug">
+              <h1 className="md:text-6xl text-4xl font-bold  leading-snug">
                 Welcome to Carefinder!
               </h1>
 
-              <p className="text-xl text-center ">
+              {/* <p className="text-xl text-center ">
                 Find, Export and Share the Nearest Hospitals Around You!
-              </p>
+              </p> */}
             </motion.div>
           </div>
+
+          <motion.div
+            initial={{
+              scale: 0,
+            }}
+            animate={{
+              scale: 1,
+            }}
+            transition={{
+              delay: 2,
+              duration: 5,
+              ease: "easeInOut",
+            }}
+          >
+            <div className="flex md:flex-row flex-col gap-5 items-center md:text-6xl text-4xl font-black mt-5">
+              <p className=" text-red-300">Find. </p>
+              <p className=" text-blue-400">Export.</p>
+              <p className=" text-blue-400">Share.</p>
+            </div>
+          </motion.div>
+
           <motion.div
             initial={{
               x: 0,
@@ -63,9 +84,10 @@ export default function Home() {
             }}
           >
             <div className=" flex items-center justify-center">
-              <Image src={hero} alt="" className="w-1/2" />
+              <Image src={hero} alt="" className="w-1/3" />
             </div>
           </motion.div>
+
           <Link href="/user/login">
             <Button className="  ">ENTER</Button>
           </Link>
