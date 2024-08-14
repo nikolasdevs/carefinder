@@ -37,7 +37,7 @@ export default function Home() {
                 },
               }}
             >
-              <h1 className="md:text-6xl text-4xl font-bold  leading-snug">
+              <h1 className="md:text-6xl text-4xl font-bold px-4  leading-snug">
                 Welcome to Carefinder!
               </h1>
 
