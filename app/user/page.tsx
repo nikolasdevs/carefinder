@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { MapPinIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import { fetchStates } from "../lib/fetchStates";
 import Papa from "papaparse";
-
+import { motion } from "framer-motion";
 import Image from "next/image";
 import location from "../../public/locationImage.jpg";
 import Link from "next/link";
@@ -417,47 +417,55 @@ const DashboardPage = () => {
               </h2>
               <div className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {currentItems.map((hospital) => (
-                  <Card
+                  <motion.div
                     key={hospital.id}
-                    className=" h-[280px]  flex flex-col justify-between hover:bg-primary hover:text-primary-foreground cursor-pointer"
+                    whileHover={{
+                      scale: 1.05,
+                      transition: { duration: 0.2 },
+                    }}
                   >
-                    <div className="flex flex-col ">
-                      {" "}
-                      <CardHeader>
-                        <CardTitle
-                          onClick={() => handleHospitalPreview(hospital)}
-                          className="hover:underline  text-lg"
-                        >
-                          {" "}
-                          {hospital.name}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="flex flex-col ">
+                    <Card
+                      key={hospital.id}
+                      className=" h-[280px]  flex flex-col justify-between cursor-pointer"
+                    >
+                      <div className="flex flex-col ">
                         {" "}
-                        <p className="text-sm  flex items-center gap-2 hover:text-primary-foreground">
+                        <CardHeader>
+                          <CardTitle
+                            onClick={() => handleHospitalPreview(hospital)}
+                            className="hover:underline  text-lg"
+                          >
+                            {" "}
+                            {hospital.name}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col ">
                           {" "}
-                          <span>
-                            <MapPinIcon width={16} />
-                          </span>{" "}
-                          {hospital.address}
-                        </p>
-                        <p className="  text-sm flex items-center gap-2 mt-2">
-                          <span>
-                            <PhoneIcon width={16} />
-                          </span>{" "}
-                          {hospital.phone_number}
-                        </p>
-                      </CardContent>{" "}
-                    </div>
-                    <CardFooter className=" w-full h-fit">
-                      <div
-                        className="hover:border    h-10 w-10 flex items-center justify-center rounded-full z-50"
-                        onClick={() => handleEditClick(hospital)}
-                      >
-                        <NotePencil size={16} />
+                          <p className="text-sm  flex items-center gap-2">
+                            {" "}
+                            <span>
+                              <MapPinIcon width={16} />
+                            </span>{" "}
+                            {hospital.address}
+                          </p>
+                          <p className="  text-sm flex items-center gap-2 mt-2">
+                            <span>
+                              <PhoneIcon width={16} />
+                            </span>{" "}
+                            {hospital.phone_number}
+                          </p>
+                        </CardContent>{" "}
                       </div>
-                    </CardFooter>
-                  </Card>
+                      <CardFooter className=" w-full h-fit">
+                        <div
+                          className="hover:border    h-10 w-10 flex items-center justify-center rounded-full z-50"
+                          onClick={() => handleEditClick(hospital)}
+                        >
+                          <NotePencil size={16} />
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
               <Dialog open={modalVisible} onOpenChange={setModalVisible}>
