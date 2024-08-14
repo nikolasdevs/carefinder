@@ -34,7 +34,11 @@ export interface Hospital {
   };
 }
 
-export const fetchHospitalData = async (queryState: string | string[] | undefined, queryAddress: string | string[] | undefined, state: string): Promise<Hospital[]> => {
+export const fetchHospitalData = async (
+  queryState: string | string[] | undefined,
+  queryAddress: string | string[] | undefined,
+  state: string
+): Promise<Hospital[]> => {
   const response = await axios.get("https://api.reliancehmo.com/v3/providers");
   const data = response.data.data; // Access the data property of the response object
   const hospitals: Hospital[] = data.map(
