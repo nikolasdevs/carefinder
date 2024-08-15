@@ -12,10 +12,10 @@ export default function Home() {
     <main className="h-screen">
       <div className="w-full h-screen flex flex-col items-center md:justify-center md:mt-0 mt-10 m-auto gap-4 ">
         <div className="w-full flex justify-between px-10 items-center py-5">
-          <div className="w-24">
+          <Link href="/" className="w-24">
             {" "}
             <Image src={Logo} alt="Company logo" />
-          </div>{" "}
+          </Link>{" "}
           <ModeToggle />
         </div>
         <div className="h-screen w-full flex flex-col items-center mt-10">
@@ -69,21 +69,20 @@ export default function Home() {
 
           <motion.div
             initial={{
-              x: 0,
+              x: 500,
               scale: 1,
             }}
             animate={{
-              x: -1000,
+              x: -1500,
               scale: 1,
             }}
             transition={{
               duration: 5,
               ease: "easeInOut",
               repeat: Infinity,
-              repeatType: "reverse",
             }}
           >
-            <div className=" flex items-center justify-center">
+            <div className=" flex items-center justify-end">
               <Image src={hero} alt="" className="w-1/3" />
             </div>
           </motion.div>
