@@ -77,7 +77,7 @@ export default function Home() {
               scale: 1,
             }}
             transition={{
-              duration: 5,
+              duration: 10,
               ease: "easeInOut",
               repeat: Infinity,
             }}
