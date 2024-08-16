@@ -18,8 +18,8 @@ export default function Home() {
           </Link>{" "}
           <ModeToggle />
         </div>
-        <div className="h-screen w-full flex flex-col items-center mt-10">
-          <div className="w-full flex flex-col items-center text-center ">
+        <div className="h-full w-full flex flex-col items-center justify-between my-10">
+          <div className="flex flex-col w-full items-center text-center">
             <motion.div
               initial="hidden"
               animate="visible"
@@ -45,48 +45,45 @@ export default function Home() {
                 Find, Export and Share the Nearest Hospitals Around You!
               </p> */}
             </motion.div>
+            <motion.div
+              initial={{
+                scale: 0,
+              }}
+              animate={{
+                scale: 1,
+              }}
+              transition={{
+                delay: 2,
+                duration: 5,
+                ease: "easeInOut",
+              }}
+            >
+              <div className="flex md:flex-row flex-col gap-5 items-center md:text-6xl text-4xl font-black mt-5">
+                <p className=" text-red-300">Find. </p>
+                <p className=" text-blue-400">Export.</p>
+                <p className=" text-blue-400">Share.</p>
+              </div>
+            </motion.div>
           </div>
 
           <motion.div
             initial={{
-              scale: 0,
-            }}
-            animate={{
-              scale: 1,
-            }}
-            transition={{
-              delay: 2,
-              duration: 5,
-              ease: "easeInOut",
-            }}
-          >
-            <div className="flex md:flex-row flex-col gap-5 items-center md:text-6xl text-4xl font-black mt-5">
-              <p className=" text-red-300">Find. </p>
-              <p className=" text-blue-400">Export.</p>
-              <p className=" text-blue-400">Share.</p>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{
               x: 500,
-              scale: 1,
             }}
             animate={{
               x: -1500,
-              scale: 1,
             }}
             transition={{
-              duration: 10,
+              duration: 8,
+
               ease: "easeInOut",
               repeat: Infinity,
             }}
           >
-            <div className=" flex items-center justify-end">
+            <div className=" flex justify-end">
               <Image src={hero} alt="" className="w-1/3" />
             </div>
           </motion.div>
-
           <Link href="/user/login">
             <Button className="  ">ENTER</Button>
           </Link>
