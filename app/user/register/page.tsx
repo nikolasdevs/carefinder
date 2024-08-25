@@ -29,16 +29,19 @@ import { auth } from "@/app/firebase/config";
 import Logo from "../../../public/logo.png";
 import { motion } from "framer-motion";
 import { ModeToggle } from "@/components/theme-toggle";
+import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
+import { Label } from "@/components/ui/label";
 
 type RegisterFormInputs = z.infer<typeof registerSchema>;
 
 const Register = () => {
-  const { Signup, error, message } = useAuth((state:any) => ({
+  const { Signup, error, message } = useAuth((state: any) => ({
     Signup: state.Signup,
     error: state.error,
     message: state.message,
   }));
   const [user, setUser] = useState<null | User>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const methods = useForm<RegisterFormInputs>({
@@ -65,6 +68,10 @@ const Register = () => {
           : "An unexpected error occurred. Please try again.";
       useAuth.setState({ error: errorMessage });
     }
+  };
+
+  const handleShowPassword = () => {
+    setShowPassword(!showPassword);
   };
 
   useEffect(() => {
@@ -152,13 +159,20 @@ const Register = () => {
                     render={({ field }: { field: any }) => (
                       <FormItem>
                         <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Password"
-                            {...field}
-                          />
+                          <Label className="relative flex items-center">
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Password"
+                              {...field}
+                            />
+                            <span
+                              className="absolute right-3 text-gray-400"
+                              onClick={handleShowPassword}
+                            >
+                              {showPassword ? <Eye /> : <EyeSlash />}
+                            </span>
+                          </Label>
                         </FormControl>
-
                         <FormMessage>{errors.password?.message}</FormMessage>
                       </FormItem>
                     )}
@@ -189,7 +203,7 @@ const Register = () => {
                   >
                     Sign up
                   </Button>
-                  {error && <p className="text-danger">{error}</p>}
+                  {error && <p className="text-red-600 text-sm">{error}</p>}
                   {message && <p className="text-success">{message}</p>}
                 </form>
               </FormProvider>

@@ -1,5 +1,5 @@
 "use client";
-
+//import { GetServerSideProps } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -32,6 +32,8 @@ import { z } from "zod";
 import { auth } from "@/app/firebase/config";
 import { getErrorMessage } from "@/utils/errorHandler";
 import { ModeToggle } from "@/components/theme-toggle";
+import { Label } from "@/components/ui/label";
+import { Eye, EyeSlash } from "@phosphor-icons/react/dist/ssr";
 
 type LoginFormInputs = z.infer<typeof loginSchema>;
 
@@ -42,6 +44,7 @@ const Login = () => {
     message: state.message,
   }));
   const [user, setUser] = useState<null | User>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const methods = useForm<LoginFormInputs>({
@@ -64,6 +67,10 @@ const Login = () => {
       console.error("Error signing in with Google:", error);
       alert("Error signing in with Google.");
     }
+  };
+
+  const handleShowPassword = () => {
+    setShowPassword(!showPassword);
   };
 
   useEffect(() => {
@@ -118,7 +125,6 @@ const Login = () => {
                 and making a positive impact on countless lives.{" "}
                 <span className=" w-24 h-[2px] bg-primary "></span>
               </p>{" "}
-              
             </motion.div>
           </div>
 
@@ -151,18 +157,26 @@ const Login = () => {
                     render={({ field }: { field: any }) => (
                       <FormItem>
                         <FormControl>
-                          <Input
-                            type="password"
-                            placeholder="Password"
-                            {...field}
-                          />
+                          <Label className="relative flex items-center">
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              placeholder="Password"
+                              {...field}
+                            />
+                            <span
+                              className="absolute right-3 text-gray-400"
+                              onClick={handleShowPassword}
+                            >
+                              {showPassword ? <Eye /> : <EyeSlash />}
+                            </span>
+                          </Label>
                         </FormControl>
                         <FormMessage>{errors.password?.message}</FormMessage>
                       </FormItem>
                     )}
                   />
                   <Link
-                    href="/user/register"
+                    href="#"
                     className="text-primary hover:font-medium text-end text-sm"
                   >
                     Forgot password?
@@ -174,7 +188,7 @@ const Login = () => {
                   >
                     Log in
                   </Button>
-                  {error && <p className="text-danger">{error}</p>}
+                  {error && <p className="text-red-600 text-sm">{error}</p>}
                   {message && <p className="text-success">{message}</p>}
                 </form>
               </FormProvider>
