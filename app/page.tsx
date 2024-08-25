@@ -85,7 +85,7 @@ export default function Home() {
             </div>
           </motion.div>
           <Link href="/user/login">
-            <Button className="  ">ENTER</Button>
+            <Button className=" text-lg font-bold tracking-wider ">ENTER</Button>
           </Link>
         </div>
       </div>
