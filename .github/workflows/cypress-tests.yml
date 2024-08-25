@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Checkout the Repository
         uses: actions/checkout@v4
-      - uses: npm/action-setup@v4
+    
         with:
           version: 9.7.0
           run_install: |
