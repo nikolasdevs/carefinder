@@ -1,0 +1,41 @@
+name: Cypress E2E Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # Use the Node.js version your project requires
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the app
+        run: npm run build
+
+      - name: Start the server
+        run: npm start &
+        env:
+          NODE_ENV: production
+
+      - name: Wait for the server to be ready
+        run: npx wait-on http://localhost:3000
+
+      - name: Run Cypress tests
+        run: npx cypress run
+        env:
+          CYPRESS_baseUrl: http://localhost:3000
