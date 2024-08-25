@@ -361,7 +361,6 @@ const DashboardPage = () => {
 
   const isLocation = selectedHospital?.location;
 
-
   return (
     <div className="h-screen mx-auto p-4 ">
       <div>
@@ -415,7 +414,7 @@ const DashboardPage = () => {
                 visible={true}
                 height="100"
                 width="100"
-                color="#4fa94d"
+                color="#003DF5"
                 ariaLabel="rotating-square-loading"
                 wrapperStyle={{}}
                 wrapperClass=""
