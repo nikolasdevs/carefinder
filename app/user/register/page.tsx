@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/form";
 import { registerSchema } from "@/utils/validationSchema";
 import { z } from "zod";
-import authImg from "../../../public/heroImg.png";
 import { auth } from "@/app/firebase/config";
 import Logo from "../../../public/logo.png";
 import { motion } from "framer-motion";
@@ -34,7 +33,7 @@ import { ModeToggle } from "@/components/theme-toggle";
 type RegisterFormInputs = z.infer<typeof registerSchema>;
 
 const Register = () => {
-  const { Signup, error, message } = useAuth((state) => ({
+  const { Signup, error, message } = useAuth((state:any) => ({
     Signup: state.Signup,
     error: state.error,
     message: state.message,
@@ -48,7 +47,6 @@ const Register = () => {
 
   const {
     handleSubmit,
-    register,
     formState: { errors, isSubmitting },
   } = methods;
 
@@ -59,7 +57,7 @@ const Register = () => {
     }
     try {
       await Signup(data.email, data.password, data.confirmPassword);
-      router.push("/login");
+      router.push("/user");
     } catch (e) {
       const errorMessage =
         e instanceof Error
@@ -73,7 +71,7 @@ const Register = () => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
-        router.push("/dashboard"); // Adjust the route as necessary
+        router.push("/ "); // Adjust the route as necessary
       } else {
         setUser(null);
       }
