@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth, firestore, storage } from "../firebase/config";
 import { collection, doc, getDoc, setDoc } from "firebase/firestore";
@@ -70,7 +70,8 @@ import {
 } from "@/components/ui/tooltip";
 import Navbar from "@/components/Navbar";
 import PaginationSection from "@/components/PaginationSection";
-import "react-quill/dist/quill.snow.css"; // Import Quill styles
+import "react-quill/dist/quill.snow.css";
+import { RotatingSquare } from "react-loader-spinner";
 
 const DashboardPage = () => {
   // User and Auth State
@@ -142,16 +143,16 @@ const DashboardPage = () => {
   }, [router]);
 
   useEffect(() => {
-    setLoading(true);
     const fetchData = async () => {
       try {
-        setLoading(true);
-
         const data = await fetchHospitalData(state, addressQuery, "");
         if (data) {
           setHospitals(data);
           setFilteredHospitals(data);
         }
+        setTimeout(() => {
+          setLoading(false);
+        }, 2000);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Failed to load data");
@@ -342,9 +343,7 @@ const DashboardPage = () => {
       const docId = new Date().getTime().toString();
       const docRef = doc(collection(firestore, "markdown_contents"), docId);
       await setDoc(docRef, { content: markdownContent });
-
       const shareableLink = `${window.location.origin}/view/${docId}`;
-
       return shareableLink;
     } catch (error) {
       console.error("Error generating shareable link:", error);
@@ -361,6 +360,7 @@ const DashboardPage = () => {
   };
 
   const isLocation = selectedHospital?.location;
+
 
   return (
     <div className="h-screen mx-auto p-4 ">
@@ -409,220 +409,246 @@ const DashboardPage = () => {
         </div>
 
         <>
-          {error && <p className="text-red-500">{error}</p>}
-          {hospitals.length > 0 && (
-            <div className="mt-10  w-full sm:p-10 p-4 ">
-              <h2 className="text-xl mb-8 font-semibold w-full text-center">
-                Hospital Results
-              </h2>
-              <div className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {currentItems.map((hospital) => (
-                  <motion.div
-                    key={hospital.id}
-                    whileHover={{
-                      scale: 1.05,
-                      transition: { duration: 0.2 },
-                    }}
-                  >
-                    <Card
-                      key={hospital.id}
-                      className=" h-[280px]  flex flex-col justify-between cursor-pointer"
-                    >
-                      <div className="flex flex-col ">
-                        {" "}
-                        <CardHeader>
-                          <CardTitle
-                            onClick={() => handleHospitalPreview(hospital)}
-                            className="hover:underline  text-lg"
-                          >
-                            {" "}
-                            {hospital.name}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex flex-col ">
-                          {" "}
-                          <p className="text-sm  flex items-center gap-2">
-                            {" "}
-                            <span>
-                              <MapPinIcon width={16} />
-                            </span>{" "}
-                            {hospital.address}
-                          </p>
-                          <p className="  text-sm flex items-center gap-2 mt-2">
-                            <span>
-                              <PhoneIcon width={16} />
-                            </span>{" "}
-                            {hospital.phone_number}
-                          </p>
-                        </CardContent>{" "}
-                      </div>
-                      <CardFooter className=" w-full h-fit">
-                        <div
-                          className="hover:border    h-10 w-10 flex items-center justify-center rounded-full z-50"
-                          onClick={() => handleEditClick(hospital)}
+          {loading ? (
+            <div className="flex items-center justify-center h-[500px]">
+              <RotatingSquare
+                visible={true}
+                height="100"
+                width="100"
+                color="#4fa94d"
+                ariaLabel="rotating-square-loading"
+                wrapperStyle={{}}
+                wrapperClass=""
+              />
+            </div>
+          ) : (
+            <>
+              {error && <p className="text-red-500">{error}</p>}
+              {hospitals.length > 0 && (
+                <div className="mt-10  w-full sm:p-10 p-4 ">
+                  <h2 className="text-xl mb-8 font-semibold w-full text-center">
+                    Hospital Results
+                  </h2>
+                  <div className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {currentItems.map((hospital) => (
+                      <motion.div
+                        key={hospital.id}
+                        whileHover={{
+                          scale: 1.05,
+                          transition: { duration: 0.2 },
+                        }}
+                      >
+                        <Card
+                          key={hospital.id}
+                          className=" h-[280px]  flex flex-col justify-between cursor-pointer"
                         >
-                          <NotePencil size={16} />
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-              <Dialog open={modalVisible} onOpenChange={setModalVisible}>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      {isPreview ? "Preview Content" : "Edit Hospital Details"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  {isPreview ? (
-                    <>
-                      <div className=" max-w-full overflow-auto p-4 ">
-                        <ReactMarkdown className="">{markdown}</ReactMarkdown>
-                      </div>
-                      <div className="flex gap-4">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button type="button" onClick={handleBackToEdit}>
-                                <Backspace />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p> Back to Edit</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={handleShare}
+                          <div className="flex flex-col ">
+                            {" "}
+                            <CardHeader>
+                              <CardTitle
+                                onClick={() => handleHospitalPreview(hospital)}
+                                className="hover:underline  text-lg"
                               >
-                                <Share />
-                              </Button>
-                            </TooltipTrigger>{" "}
-                            <TooltipContent>
-                              <p>Share</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                      <div className=" h-auto flex"></div>
-                    </>
-                  ) : (
-                    <>
-                      {isImageUpload ? (
-                        <>
-                          <Input type="file" onChange={handleFileChange} />
-                          <DialogFooter className="flex items-center justify-between w-full">
-                            <Button type="submit" onClick={handleImageUpload}>
-                              Upload Image
-                            </Button>
-                            <Button
-                              type="button"
-                              onClick={() => setIsImageUpload(false)}
+                                {" "}
+                                {hospital.name}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="flex flex-col ">
+                              {" "}
+                              <p className="text-sm  flex items-center gap-2">
+                                {" "}
+                                <span>
+                                  <MapPinIcon width={16} />
+                                </span>{" "}
+                                {hospital.address}
+                              </p>
+                              <p className="  text-sm flex items-center gap-2 mt-2">
+                                <span>
+                                  <PhoneIcon width={16} />
+                                </span>{" "}
+                                {hospital.phone_number}
+                              </p>
+                            </CardContent>{" "}
+                          </div>
+                          <CardFooter className=" w-full h-fit">
+                            <div
+                              className="hover:border    h-10 w-10 flex items-center justify-center rounded-full z-50"
+                              onClick={() => handleEditClick(hospital)}
                             >
-                              Back to Editor
-                            </Button>
-                          </DialogFooter>
+                              <NotePencil size={16} />
+                            </div>
+                          </CardFooter>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <Dialog open={modalVisible} onOpenChange={setModalVisible}>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>
+                          {isPreview
+                            ? "Preview Content"
+                            : "Edit Hospital Details"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      {isPreview ? (
+                        <>
+                          <div className=" max-w-full overflow-auto p-4 ">
+                            <ReactMarkdown className="">
+                              {markdown}
+                            </ReactMarkdown>
+                          </div>
+                          <div className="flex gap-4">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    onClick={handleBackToEdit}
+                                  >
+                                    <Backspace />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p> Back to Edit</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleShare}
+                                  >
+                                    <Share />
+                                  </Button>
+                                </TooltipTrigger>{" "}
+                                <TooltipContent>
+                                  <p>Share</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </div>
+                          <div className=" h-auto flex"></div>
                         </>
                       ) : (
                         <>
-                          <MdEditor
-                            value={markdown}
-                            renderHTML={(text) => mdParser.render(text)}
-                            onChange={handleEditorChange}
-                            config={{
-                              view: {
-                                menu: true,
-                                md: true,
-                                html: true,
-                                fullScreen: true,
-                                hideMenu: false,
-                              },
-                            }}
-                            style={{
-                              width: "100%", // Adjust width to 100% of the parent container
-                              maxWidth: "600px", // Set a maximum width for larger screens
-                              height: "300px",
-                              overflow: "auto",
-                            }}
-                          />
-                          <div className="flex justify-between w-full  p-2 mt-2 rounded-lg">
-                            <Button
-                              onClick={() => setIsImageUpload(true)}
-                              style={{ marginTop: "10px" }}
-                            >
-                              Add Image
-                            </Button>
-                            <Button
-                              onClick={handlePreview}
-                              style={{ marginTop: "10px" }}
-                            >
-                              Preview
-                            </Button>
-                          </div>
+                          {isImageUpload ? (
+                            <>
+                              <Input type="file" onChange={handleFileChange} />
+                              <DialogFooter className="flex items-center justify-between w-full">
+                                <Button
+                                  type="submit"
+                                  onClick={handleImageUpload}
+                                >
+                                  Upload Image
+                                </Button>
+                                <Button
+                                  type="button"
+                                  onClick={() => setIsImageUpload(false)}
+                                >
+                                  Back to Editor
+                                </Button>
+                              </DialogFooter>
+                            </>
+                          ) : (
+                            <>
+                              <MdEditor
+                                value={markdown}
+                                renderHTML={(text) => mdParser.render(text)}
+                                onChange={handleEditorChange}
+                                config={{
+                                  view: {
+                                    menu: true,
+                                    md: true,
+                                    html: true,
+                                    fullScreen: true,
+                                    hideMenu: false,
+                                  },
+                                }}
+                                style={{
+                                  width: "100%", // Adjust width to 100% of the parent container
+                                  maxWidth: "600px", // Set a maximum width for larger screens
+                                  height: "300px",
+                                  overflow: "auto",
+                                }}
+                              />
+                              <div className="flex justify-between w-full  p-2 mt-2 rounded-lg">
+                                <Button
+                                  onClick={() => setIsImageUpload(true)}
+                                  style={{ marginTop: "10px" }}
+                                >
+                                  Add Image
+                                </Button>
+                                <Button
+                                  onClick={handlePreview}
+                                  style={{ marginTop: "10px" }}
+                                >
+                                  Preview
+                                </Button>
+                              </div>
+                            </>
+                          )}
                         </>
                       )}
-                    </>
+                    </DialogContent>
+                  </Dialog>
+
+                  {selectedHospital && (
+                    <Dialog open={mVisible} onOpenChange={setMVisible}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" style={{ display: "none" }}>
+                          View
+                        </Button>
+                      </DialogTrigger>
+
+                      <DialogContent className="sm:max-w-[50%]">
+                        <DialogHeader>
+                          <DialogTitle>{selectedHospital.name}</DialogTitle>
+                        </DialogHeader>
+                        <p className=" text-sm flex items-center gap-2 mt-2">
+                          <span>
+                            <HospitalIcon width={16} />
+                          </span>
+                          {selectedHospital.type.name}
+                        </p>
+                        <p className="text-sm  flex items-center gap-2">
+                          <span>
+                            <MapPin width={16} />
+                          </span>
+                          {selectedHospital.address}
+                        </p>
+                        <p className="text-sm  flex items-center gap-2">
+                          <span>
+                            <MapPinArea width={16} />
+                          </span>
+                          {isLocation ? selectedHospital.location : "N/A"}
+                        </p>
+                        <p className=" text-sm flex items-center gap-2 mt-2">
+                          <span>
+                            <Phone width={16} />
+                          </span>
+                          {selectedHospital.phone_number}
+                        </p>
+                      </DialogContent>
+                    </Dialog>
                   )}
-                </DialogContent>
-              </Dialog>
 
-              {selectedHospital && (
-                <Dialog open={mVisible} onOpenChange={setMVisible}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" style={{ display: "none" }}>
-                      View
-                    </Button>
-                  </DialogTrigger>
+                  <Button className="my-8" onClick={exportToCSV}>
+                    Export to CSV
+                  </Button>
 
-                  <DialogContent className="sm:max-w-[50%]">
-                    <DialogHeader>
-                      <DialogTitle>{selectedHospital.name}</DialogTitle>
-                    </DialogHeader>
-                    <p className=" text-sm flex items-center gap-2 mt-2">
-                      <span>
-                        <HospitalIcon width={16} />
-                      </span>
-                      {selectedHospital.type.name}
-                    </p>
-                    <p className="text-sm  flex items-center gap-2">
-                      <span>
-                        <MapPin width={16} />
-                      </span>
-                      {selectedHospital.address}
-                    </p>
-                    <p className="text-sm  flex items-center gap-2">
-                      <span>
-                        <MapPinArea width={16} />
-                      </span>
-                      {isLocation ? selectedHospital.location : "N/A"}
-                    </p>
-                    <p className=" text-sm flex items-center gap-2 mt-2">
-                      <span>
-                        <Phone width={16} />
-                      </span>
-                      {selectedHospital.phone_number}
-                    </p>
-                  </DialogContent>
-                </Dialog>
+                  <PaginationSection
+                    totalItems={filteredHospitals.length}
+                    itemsPerPage={itemsPerPage}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                  />
+                </div>
               )}
-
-              <Button className="my-8" onClick={exportToCSV}>
-                Export to CSV
-              </Button>
-
-              <PaginationSection
-                totalItems={filteredHospitals.length}
-                itemsPerPage={itemsPerPage}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-              />
-            </div>
+            </>
           )}
         </>
       </main>
