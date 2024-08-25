@@ -40,7 +40,7 @@ export const fetchHospitalData = async (
   state: string
 ): Promise<Hospital[]> => {
   const response = await axios.get("https://api.reliancehmo.com/v3/providers");
-  const data = response.data.data; // Access the data property of the response object
+  const data = response.data.data;
   const hospitals: Hospital[] = data.map(
     (hospital: {
       id: any;
